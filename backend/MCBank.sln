@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCBank.Console", "MCBank.Console\MCBank.Console.csproj", "{581D0684-D5ED-4A2C-B74B-EFC3765EC288}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCBank.Cli", "MCBank.Cli\MCBank.Cli.csproj", "{581D0684-D5ED-4A2C-B74B-EFC3765EC288}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
