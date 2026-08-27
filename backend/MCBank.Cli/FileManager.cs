@@ -4,33 +4,33 @@ namespace MCBank.Cli;
 
 public class FileManager
 {
-    private const string FilePath = "wallet.json";
+    private const string FilePath = "accounts.json";
 
     private readonly JsonSerializerOptions _options = new()
     {
         WriteIndented = true
     };
 
-    public void Save(List<Transaction> transactions)
+    public void Save(List<BankAccount> accounts)
     {
-        var json = JsonSerializer.Serialize(transactions, _options);
+        var json = JsonSerializer.Serialize(accounts, _options);
         File.WriteAllText(FilePath, json);
     }
 
-    public List<Transaction> Load()
+    public List<BankAccount> Load()
     {
         if (!File.Exists(FilePath))
-            return new List<Transaction>();
+            return new List<BankAccount>();
 
         try
         {
             var json = File.ReadAllText(FilePath);
-            return JsonSerializer.Deserialize<List<Transaction>>(json) ?? new List<Transaction>();
+            return JsonSerializer.Deserialize<List<BankAccount>>(json) ?? new List<BankAccount>();
         }
         catch (Exception e)
         {
             Console.WriteLine($"Ошибка при загрузки данных: {e.Message}");
-            return new List<Transaction>();
+            return new List<BankAccount>();
         }
     }
 }

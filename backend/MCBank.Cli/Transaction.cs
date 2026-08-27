@@ -1,3 +1,5 @@
+using MCBank.Cli.Enums;
+
 namespace MCBank.Cli;
 
 public sealed record Transaction

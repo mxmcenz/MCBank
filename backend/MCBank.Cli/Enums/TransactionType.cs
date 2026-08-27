@@ -1,4 +1,4 @@
-namespace MCBank.Cli;
+namespace MCBank.Cli.Enums;
 
 public enum TransactionType
 {
