@@ -81,6 +81,4 @@ public class BankService
         _fileManager.Save(_bankAccounts);
         return true;
     }
-
-    private BankAccount? GetAccountByGuid(string guid) => _bankAccounts.Find(a => a.Guid.ToString() == guid);
 }

@@ -9,30 +9,29 @@ public class CliUserInterface(BankService bankService)
     {
         while (true)
         {
+            AnsiConsole.Clear();
+            DrawHeader();
+
             var choice = AnsiConsole.Prompt(
                 new SelectionPrompt<MainMenuOptions>()
                     .Title("[yellow]Главное меню[/]")
-                    .AddChoices(MainMenuOptions.CreateAccount, MainMenuOptions.SelectAccount, MainMenuOptions.Exit)
+                    .AddChoices(MainMenuOptions.SelectAccount, MainMenuOptions.CreateAccount, MainMenuOptions.Exit)
                     .UseConverter(option => option switch
                     {
-                        MainMenuOptions.CreateAccount => "Создать новый счет",
                         MainMenuOptions.SelectAccount => "Выбрать существующий счет",
+                        MainMenuOptions.CreateAccount => "Создать новый счет",
                         MainMenuOptions.Exit => "Выход",
                         _ => option.ToString()
                     }));
 
             switch (choice)
             {
-                case MainMenuOptions.CreateAccount:
-                    var newAccount = new BankAccount();
-                    bankService.AddAccount(newAccount);
-                    AnsiConsole.MarkupLine($"[green]Счет успешно создан![/] ID: {newAccount.Guid}");
-                    return newAccount;
                 case MainMenuOptions.SelectAccount:
                     var accounts = bankService.GetAccounts();
                     if (accounts.Count == 0)
                     {
                         AnsiConsole.MarkupLine("[red]У вас еще нет счетов![/]");
+                        WaitForEnter();
                         continue;
                     }
 
@@ -43,6 +42,12 @@ public class CliUserInterface(BankService bankService)
                             .AddChoices(accounts)
                             .UseConverter(acc =>
                                 $"Счет: [blue]{Markup.Escape(acc.Guid.ToString())}[/] | Баланс: [green]{acc.Balance}$[/]"));
+                case MainMenuOptions.CreateAccount:
+                    var newAccount = new BankAccount();
+                    bankService.AddAccount(newAccount);
+                    AnsiConsole.MarkupLine($"[green]Счет успешно создан![/] ID: {newAccount.Guid}");
+                    WaitForEnter();
+                    return newAccount;
                 case MainMenuOptions.Exit:
                 default:
                     return null;
@@ -54,6 +59,9 @@ public class CliUserInterface(BankService bankService)
     {
         while (true)
         {
+            AnsiConsole.Clear();
+            DrawHeader();
+
             var choice = AnsiConsole.Prompt(
                 new SelectionPrompt<AccountMenuOptions>()
                     .Title("[yellow]Выберите действие со счетом:[/]")
@@ -76,16 +84,30 @@ public class CliUserInterface(BankService bankService)
                     AnsiConsole.MarkupLine($"[bold]Баланс:[/] [green]{selectedAccount.Balance}$[/]");
                     break;
                 case AccountMenuOptions.Deposit:
-                    bankService.Deposit(selectedAccount, AnsiConsole.Prompt(
+                    var depositPrompt = AnsiConsole.Prompt(
                         new TextPrompt<decimal>("Введите сумму:")
                             .ValidationErrorMessage("[red]Ошибка:[/] Введите положительное число")
-                            .Validate(value => value > 0)));
+                            .Validate(value => value > 0));
+
+
+                    var deposited = bankService.Deposit(selectedAccount, depositPrompt);
+
+                    AnsiConsole.MarkupLine(deposited
+                        ? "[green]Счет успешно пополнен[/]"
+                        : "[red]Ошибка:[/] Не удалось пополнить счет");
+
                     break;
                 case AccountMenuOptions.Withdraw:
-                    bankService.Withdraw(selectedAccount, AnsiConsole.Prompt(
+                    var withdrawPrompt = AnsiConsole.Prompt(
                         new TextPrompt<decimal>("Введите сумму:")
                             .ValidationErrorMessage("[red]Ошибка:[/] Введите положительное число")
-                            .Validate(value => value > 0)));
+                            .Validate(value => value > 0));
+
+                    var withdrawed = bankService.Withdraw(selectedAccount, withdrawPrompt);
+
+                    AnsiConsole.MarkupLine(withdrawed
+                        ? "[green]Деньги успешно сняты со счета[/]"
+                        : "[red]Ошибка:[/] Не удалось снять денег со счета");
                     break;
                 case AccountMenuOptions.Transactions:
                     DisplayTransactions(selectedAccount);
@@ -124,7 +146,15 @@ public class CliUserInterface(BankService bankService)
                 default:
                     return;
             }
+
+            WaitForEnter();
         }
+    }
+
+    private static void DrawHeader()
+    {
+        var header = new Rule("MCBank");
+        AnsiConsole.Write(header);
     }
 
     private static void DisplayTransactions(BankAccount account)
@@ -161,5 +191,11 @@ public class CliUserInterface(BankService bankService)
         }
 
         AnsiConsole.Write(table);
+    }
+
+    private static void WaitForEnter()
+    {
+        AnsiConsole.MarkupLine("\n[grey]Нажмите Enter, чтобы продолжить...[/]");
+        Console.ReadLine();
     }
 }
