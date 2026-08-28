@@ -1,10 +1,12 @@
 using MCBank.WebApi.Application;
+using MCBank.WebApi.Core.Interfaces;
 using MCBank.WebApi.Infrastructure;
+using MCBank.WebApi.Infrastructure.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSingleton<FileManager>();
-builder.Services.AddSingleton<BankService>();
+builder.Services.AddSingleton<IStorage, JsonStorage>();
+builder.Services.AddSingleton<IBankService, BankService>();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 

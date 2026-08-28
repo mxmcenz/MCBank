@@ -1,3 +1,3 @@
 namespace MCBank.WebApi.Core.DTOs;
 
-public record TransferRequest(Guid FromAccountId, Guid ToAccountId, decimal Amount);
+public record TransferRequest(int FromAccountId, int ToAccountId, decimal Amount);

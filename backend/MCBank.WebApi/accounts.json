@@ -1,99 +1,46 @@
 [
   {
-    "Guid": "4e1b1833-28d4-42ea-96ca-344f573302cd",
-    "Balance": 200,
+    "Id": 1,
+    "Iban": "KZ983709377081729842",
+    "Balance": 100,
     "Transactions": [
       {
         "Amount": 100,
         "Type": 0,
-        "CreatedAt": "2026-08-27T14:15:07.0253833Z"
+        "CreatedAt": "2026-08-28T14:49:11.4705442Z"
       },
-      {
-        "Amount": 50,
-        "Type": 0,
-        "CreatedAt": "2026-08-27T14:15:26.8337404Z"
-      },
-      {
-        "Amount": 50,
-        "Type": 0,
-        "CreatedAt": "2026-08-27T14:15:34.6200026Z"
-      },
-      {
-        "Amount": 10,
-        "Type": 0,
-        "CreatedAt": "2026-08-27T14:29:13.1299151Z"
-      },
-      {
-        "Amount": 10,
-        "Type": 1,
-        "CreatedAt": "2026-08-27T14:29:29.1342986Z"
-      },
-      {
-        "Amount": 50,
-        "Type": 0,
-        "CreatedAt": "2026-08-28T07:35:15.5512649Z"
-      },
-      {
-        "Amount": 50,
-        "Type": 0,
-        "CreatedAt": "2026-08-28T08:33:36.9882342Z"
-      },
-      {
-        "Amount": 50,
-        "Type": 1,
-        "CreatedAt": "2026-08-28T08:34:26.7355461Z"
-      },
-      {
-        "Amount": 50,
-        "Type": 1,
-        "CreatedAt": "2026-08-28T08:50:47.7788438Z"
-      }
-    ]
-  },
-  {
-    "Guid": "0837d37c-8f46-4638-a8a9-d1f8ceff8a4e",
-    "Balance": 400,
-    "Transactions": [
       {
         "Amount": 200,
         "Type": 0,
-        "CreatedAt": "2026-08-27T14:15:19.9877193Z"
+        "CreatedAt": "2026-08-28T14:49:20.4765502Z"
       },
       {
-        "Amount": 50,
+        "Amount": 100,
         "Type": 1,
-        "CreatedAt": "2026-08-27T14:15:26.8335135Z"
+        "CreatedAt": "2026-08-28T14:51:05.2247324Z"
       },
       {
-        "Amount": 50,
+        "Amount": 100,
         "Type": 1,
-        "CreatedAt": "2026-08-27T14:15:34.6187347Z"
-      },
-      {
-        "Amount": 300,
-        "Type": 0,
-        "CreatedAt": "2026-08-27T14:24:16.6246926Z"
-      },
-      {
-        "Amount": 50,
-        "Type": 1,
-        "CreatedAt": "2026-08-28T07:35:39.1950021Z"
-      },
-      {
-        "Amount": 50,
-        "Type": 0,
-        "CreatedAt": "2026-08-28T08:50:47.780672Z"
+        "CreatedAt": "2026-08-28T14:52:13.6233219Z"
       }
     ]
   },
   {
-    "Guid": "1d3f59ac-cf2e-4ad4-890d-8a992d5eb3ac",
-    "Balance": 0,
-    "Transactions": []
-  },
-  {
-    "Guid": "06473a10-572b-4457-8609-9018b04a8aea",
-    "Balance": 0,
-    "Transactions": []
+    "Id": 2,
+    "Iban": "KZ994858132086172372",
+    "Balance": 400,
+    "Transactions": [
+      {
+        "Amount": 300,
+        "Type": 0,
+        "CreatedAt": "2026-08-28T14:51:50.6390655Z"
+      },
+      {
+        "Amount": 100,
+        "Type": 0,
+        "CreatedAt": "2026-08-28T14:52:13.6233223Z"
+      }
+    ]
   }
 ]

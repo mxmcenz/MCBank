@@ -2,9 +2,10 @@ using System.Text.Json.Serialization;
 
 namespace MCBank.WebApi.Core;
 
-public class BankAccount
+public class Account
 {
-    public Guid Guid { get; init; } = Guid.NewGuid();
+    public int Id { get; set; }
+    public string Iban { get; set; } = string.Empty;
     [JsonInclude] public decimal Balance { get; internal set; }
     public List<Transaction> Transactions { get; set; } = [];
 }

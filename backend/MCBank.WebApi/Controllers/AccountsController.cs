@@ -1,97 +1,88 @@
-using MCBank.WebApi.Application;
-using MCBank.WebApi.Core;
 using MCBank.WebApi.Core.DTOs;
+using MCBank.WebApi.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MCBank.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AccountsController(BankService bankService) : ControllerBase
+public class AccountsController(IBankService bankService) : ControllerBase
 {
     [HttpGet]
-    public IActionResult GetAccounts()
+    public async Task<IActionResult> GetAccounts()
     {
-        return Ok(bankService.GetAccounts());
+        var result = await bankService.GetAllAccountsAsync();
+
+        if (result.IsFailure)
+        {
+            return NotFound(result.Error);
+        }
+
+        return Ok(result.Value);
     }
 
     [HttpPost]
-    public IActionResult CreateAccount()
+    public async Task<IActionResult> CreateAccount()
     {
-        var account = new BankAccount();
-        bankService.AddAccount(account);
-        return CreatedAtAction(nameof(GetAccounts), new { id = account.Guid }, account);
+        var result = await bankService.CreateAccountAsync();
+
+        if (result.IsFailure)
+        {
+            return BadRequest(result.Error);
+        }
+
+        return CreatedAtAction(nameof(GetAccounts), new { id = result.Value.Id }, result.Value);
     }
 
     [HttpPost("deposit")]
-    public IActionResult Deposit([FromBody] TransactionRequest request)
+    public async Task<IActionResult> Deposit([FromBody] TransactionRequest request)
     {
-        var account = bankService.GetAccounts().FirstOrDefault(acc => acc.Guid == request.AccountId);
-        if (account == null)
+        var result = await bankService.DepositAsync(request.AccountId, request.Amount);
+
+        if (result.IsFailure)
         {
-            return NotFound();
-        }
-
-        var result = bankService.Deposit(account, request.Amount);
-
-        if (!result)
-        {
-            return BadRequest("Ошибка: Сумма меньше или равна 0");
-        }
-
-        return Ok(account);
-    }
-
-    [HttpPost("withdraw")]
-    public IActionResult Withdraw([FromBody] TransactionRequest request)
-    {
-        var account = bankService.GetAccounts().FirstOrDefault(acc => acc.Guid == request.AccountId);
-        if (account == null)
-        {
-            return NotFound("");
-        }
-
-        var result = bankService.Withdraw(account, request.Amount);
-
-        if (!result)
-        {
-            return BadRequest("Ошибка: Сумма меньше или равна 0 или недостаточно средств");
-        }
-
-        return Ok(account);
-    }
-
-    [HttpPost("transfer")]
-    public IActionResult Transfer([FromBody] TransferRequest request)
-    {
-        var fromAccount = bankService.GetAccounts().FirstOrDefault(acc => acc.Guid == request.FromAccountId);
-        var toAccount = bankService.GetAccounts().FirstOrDefault(acc => acc.Guid == request.ToAccountId);
-
-        if (fromAccount == null || toAccount == null)
-        {
-            return NotFound();
-        }
-
-        var result = bankService.Transfer(fromAccount, toAccount, request.Amount);
-
-        if (!result)
-        {
-            return BadRequest("Ошибка: Сумма меньше или равна 0 или недостаточно средств");
+            return BadRequest(result.Error);
         }
 
         return Ok();
     }
 
-    [HttpGet("{id:guid}/transactions")]
-    public IActionResult GetAccountTransactions(Guid id)
+    [HttpPost("withdraw")]
+    public async Task<IActionResult> Withdraw([FromBody] TransactionRequest request)
     {
-        var account = bankService.GetAccounts().FirstOrDefault(acc => acc.Guid == id);
+        var result = await bankService.WithdrawAsync(request.AccountId, request.Amount);
 
-        if (account == null)
+        if (result.IsFailure)
         {
-            return NotFound();
+            return BadRequest(result.Error);
         }
 
-        return Ok(account.Transactions);
+        return Ok();
+    }
+
+    [HttpPost("transfer")]
+    public async Task<IActionResult> Transfer([FromBody] TransferRequest request)
+    {
+        var result = await bankService.TransferAsync(request.FromAccountId, request.ToAccountId, request.Amount);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(result.Error);
+        }
+
+        return Ok();
+    }
+
+    [HttpGet("{id:int}/transactions")]
+    public async Task<IActionResult> GetAccountTransactions(int id)
+    {
+        var result = await bankService.GetAccountByIdAsync(id);
+
+        if (result.IsFailure)
+        {
+            return NotFound(result.Error);
+        }
+
+        return Ok(result.Value.Transactions);
     }
 }
