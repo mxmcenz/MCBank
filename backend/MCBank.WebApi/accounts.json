@@ -1,7 +1,7 @@
 [
   {
     "Guid": "4e1b1833-28d4-42ea-96ca-344f573302cd",
-    "Balance": 250,
+    "Balance": 200,
     "Transactions": [
       {
         "Amount": 100,
@@ -42,12 +42,17 @@
         "Amount": 50,
         "Type": 1,
         "CreatedAt": "2026-08-28T08:34:26.7355461Z"
+      },
+      {
+        "Amount": 50,
+        "Type": 1,
+        "CreatedAt": "2026-08-28T08:50:47.7788438Z"
       }
     ]
   },
   {
     "Guid": "0837d37c-8f46-4638-a8a9-d1f8ceff8a4e",
-    "Balance": 350,
+    "Balance": 400,
     "Transactions": [
       {
         "Amount": 200,
@@ -73,6 +78,11 @@
         "Amount": 50,
         "Type": 1,
         "CreatedAt": "2026-08-28T07:35:39.1950021Z"
+      },
+      {
+        "Amount": 50,
+        "Type": 0,
+        "CreatedAt": "2026-08-28T08:50:47.780672Z"
       }
     ]
   },

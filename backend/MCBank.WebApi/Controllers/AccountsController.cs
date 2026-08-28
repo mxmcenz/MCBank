@@ -60,4 +60,38 @@ public class AccountsController(BankService bankService) : ControllerBase
 
         return Ok(account);
     }
+
+    [HttpPost("transfer")]
+    public IActionResult Transfer([FromBody] TransferRequest request)
+    {
+        var fromAccount = bankService.GetAccounts().FirstOrDefault(acc => acc.Guid == request.FromAccountId);
+        var toAccount = bankService.GetAccounts().FirstOrDefault(acc => acc.Guid == request.ToAccountId);
+
+        if (fromAccount == null || toAccount == null)
+        {
+            return NotFound();
+        }
+
+        var result = bankService.Transfer(fromAccount, toAccount, request.Amount);
+
+        if (!result)
+        {
+            return BadRequest("Ошибка: Сумма меньше или равна 0 или недостаточно средств");
+        }
+
+        return Ok();
+    }
+
+    [HttpGet("{id:guid}/transactions")]
+    public IActionResult GetAccountTransactions(Guid id)
+    {
+        var account = bankService.GetAccounts().FirstOrDefault(acc => acc.Guid == id);
+
+        if (account == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(account.Transactions);
+    }
 }
