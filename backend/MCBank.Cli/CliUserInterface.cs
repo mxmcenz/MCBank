@@ -9,7 +9,6 @@ public class CliUserInterface(BankService bankService)
     {
         while (true)
         {
-            AnsiConsole.Clear();
             DrawHeader();
 
             var choice = AnsiConsole.Prompt(
@@ -59,8 +58,7 @@ public class CliUserInterface(BankService bankService)
     {
         while (true)
         {
-            AnsiConsole.Clear();
-            DrawHeader();
+            DrawHeader(selectedAccount);
 
             var choice = AnsiConsole.Prompt(
                 new SelectionPrompt<AccountMenuOptions>()
@@ -151,10 +149,15 @@ public class CliUserInterface(BankService bankService)
         }
     }
 
-    private static void DrawHeader()
+    private static void DrawHeader(BankAccount? account = null)
     {
-        var header = new Rule("MCBank");
-        AnsiConsole.Write(header);
+        AnsiConsole.Clear();
+        var rule = new Rule("MCBank");
+        if (account != null)
+        {
+            rule.Title = $"Счет: {account.Guid} | [green]Баланс: {account.Balance}$[/]";
+        }
+        AnsiConsole.Write(rule);
     }
 
     private static void DisplayTransactions(BankAccount account)
