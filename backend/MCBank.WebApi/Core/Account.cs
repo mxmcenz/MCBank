@@ -6,6 +6,5 @@ public class Account
 {
     public int Id { get; set; }
     public string Iban { get; set; } = string.Empty;
-    [JsonInclude] public decimal Balance { get; internal set; }
-    public List<Transaction> Transactions { get; set; } = [];
+    public decimal Balance { get; internal set; }
 }

@@ -9,7 +9,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
 builder.Services.AddSingleton<IStorage, JsonStorage>();
-builder.Services.AddSingleton<IBankService, BankService>();
+builder.Services.AddScoped<IBankService, BankService>();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 

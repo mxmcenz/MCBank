@@ -76,13 +76,13 @@ public class AccountsController(IBankService bankService) : ControllerBase
     [HttpGet("{id:int}/transactions")]
     public async Task<IActionResult> GetAccountTransactions(int id)
     {
-        var result = await bankService.GetAccountByIdAsync(id);
+        var result = await bankService.GetTransactionHistoryAsync(id);
 
         if (result.IsFailure)
         {
             return NotFound(result.Error);
         }
 
-        return Ok(result.Value.Transactions);
+        return Ok(result.Value);
     }
 }

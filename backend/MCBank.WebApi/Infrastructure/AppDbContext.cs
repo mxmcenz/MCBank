@@ -10,10 +10,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Account>()
-            .HasMany(a => a.Transactions)
-            .WithOne()
-            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Transaction>()
+            .HasOne<Account>()
+            .WithMany()
+            .HasForeignKey(t => t.AccountId)
+            .OnDelete(DeleteBehavior.Restrict);
         
         base.OnModelCreating(modelBuilder);
     }

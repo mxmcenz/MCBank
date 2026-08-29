@@ -2,50 +2,41 @@ using MCBank.WebApi.Core;
 using MCBank.WebApi.Core.Common;
 using MCBank.WebApi.Core.Enums;
 using MCBank.WebApi.Core.Interfaces;
-using MCBank.WebApi.Infrastructure.Interfaces;
+using MCBank.WebApi.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 
 namespace MCBank.WebApi.Application;
 
-public class BankService : IBankService
+public class BankService(AppDbContext context) : IBankService
 {
-    private readonly IStorage _storage;
-    private readonly List<Account> _bankAccounts;
-
-    public BankService(IStorage storage)
+    public async Task<Result<Account>> GetAccountByIdAsync(int id)
     {
-        _storage = storage;
-        _bankAccounts = _storage.Load();
+        var account = await context.Accounts.FindAsync(id);
+
+        return account == null ? Result<Account>.Failure("Счет не найден") : Result<Account>.Success(account);
     }
 
-    public Task<Result<Account>> GetAccountByIdAsync(int id)
+    public async Task<Result<List<Account>>> GetAllAccountsAsync()
     {
-        var account = _bankAccounts.FirstOrDefault(acc => acc.Id == id);
+        var accounts = await context.Accounts
+            .AsNoTracking()
+            .ToListAsync();
 
-        if (account == null)
-        {
-            return Task.FromResult(Result<Account>.Failure("Счет не найден"));
-        }
-
-        return Task.FromResult(Result<Account>.Success(account));
+        return Result<List<Account>>.Success(accounts);
     }
-
-    public Task<Result<List<Account>>> GetAllAccountsAsync() =>
-        Task.FromResult(Result<List<Account>>.Success(_bankAccounts));
 
     public async Task<Result<Account>> CreateAccountAsync()
     {
-        var nextId = _bankAccounts.Count > 0 ? _bankAccounts.Max(a => a.Id) + 1 : 1;
         var randomDigits = string.Concat(Enumerable.Range(0, 18).Select(_ => Random.Shared.Next(0, 10)));
         var iban = $"KZ{randomDigits}";
 
         var account = new Account
         {
-            Id = nextId,
             Iban = iban
         };
 
-        _bankAccounts.Add(account);
-        await _storage.SaveAsync(_bankAccounts);
+        await context.Accounts.AddAsync(account);
+        await context.SaveChangesAsync();
 
         return Result<Account>.Success(account);
     }
@@ -57,7 +48,7 @@ public class BankService : IBankService
             return Result.Failure("Сумма не может быть меньше или равна 0");
         }
 
-        var account = _bankAccounts.FirstOrDefault(acc => acc.Id == accountId);
+        var account = await context.Accounts.FindAsync(accountId);
 
         if (account == null)
         {
@@ -65,14 +56,17 @@ public class BankService : IBankService
         }
 
         account.Balance += amount;
-        account.Transactions.Add(new Transaction
+        var transaction = new Transaction
         {
+            AccountId = accountId,
             Amount = amount,
             Type = TransactionType.Deposit,
             CreatedAt = DateTime.UtcNow
-        });
+        };
 
-        await _storage.SaveAsync(_bankAccounts);
+        await context.Transactions.AddAsync(transaction);
+        await context.SaveChangesAsync();
+
         return Result.Success();
     }
 
@@ -83,7 +77,7 @@ public class BankService : IBankService
             return Result.Failure("Сумма не может быть меньше или равна 0");
         }
 
-        var account = _bankAccounts.FirstOrDefault(acc => acc.Id == accountId);
+        var account = await context.Accounts.FindAsync(accountId);
 
         if (account == null)
         {
@@ -96,14 +90,17 @@ public class BankService : IBankService
         }
 
         account.Balance -= amount;
-        account.Transactions.Add(new Transaction
+        var transaction = new Transaction
         {
+            AccountId = accountId,
             Amount = amount,
             Type = TransactionType.Withdraw,
             CreatedAt = DateTime.UtcNow
-        });
+        };
 
-        await _storage.SaveAsync(_bankAccounts);
+        await context.Transactions.AddAsync(transaction);
+        await context.SaveChangesAsync();
+
         return Result.Success();
     }
 
@@ -114,44 +111,67 @@ public class BankService : IBankService
             return Result.Failure("Сумма не может быть меньше или равна 0");
         }
 
-        var fromAccount = _bankAccounts.FirstOrDefault(acc => acc.Id == fromAccountId);
+        var fromAccount = await context.Accounts.FindAsync(fromAccountId);
 
         if (fromAccount == null)
         {
-            return Result.Failure("Счет не найден");
+            return Result.Failure("Счет отправителя не найден");
         }
+        
+        var toAccount = await context.Accounts.FindAsync(toAccountId);
 
+        if (toAccount == null)
+        {
+            return Result.Failure("Счет получателя не найден");
+        }
+        
         if (amount > fromAccount.Balance)
         {
             return Result.Failure("Недостаточно средств");
         }
 
-        var toAccount = _bankAccounts.FirstOrDefault(acc => acc.Id == toAccountId);
-
-        if (toAccount == null)
-        {
-            return Result.Failure("Счет не найден");
-        }
-
         fromAccount.Balance -= amount;
         toAccount.Balance += amount;
 
-        fromAccount.Transactions.Add(new Transaction
+        var fromTransaction = new Transaction
         {
+            AccountId = fromAccountId,
             Amount = amount,
             Type = TransactionType.Withdraw,
             CreatedAt = DateTime.UtcNow
-        });
+        };
 
-        toAccount.Transactions.Add(new Transaction
+        var toTransaction = new Transaction
         {
+            AccountId = toAccountId,
             Amount = amount,
             Type = TransactionType.Deposit,
             CreatedAt = DateTime.UtcNow
-        });
+        };
 
-        await _storage.SaveAsync(_bankAccounts);
+        await context.Transactions.AddAsync(fromTransaction);
+        await context.Transactions.AddAsync(toTransaction);
+        await context.SaveChangesAsync();
 
         return Result.Success();
+    }
+
+    public async Task<Result<List<Transaction>>> GetTransactionHistoryAsync(int accountId)
+    {
+        var exists = await context.Accounts
+            .AsNoTracking()
+            .AnyAsync(a => a.Id == accountId);
+
+        if (!exists)
+        {
+            return Result<List<Transaction>>.Failure("Счет не найден");
+        }
+
+        var transactions = await context.Transactions
+            .Where(t => t.AccountId == accountId)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
+
+        return Result<List<Transaction>>.Success(transactions);
     }
 }
