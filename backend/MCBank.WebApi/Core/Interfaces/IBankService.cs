@@ -11,4 +11,5 @@ public interface IBankService
     Task<Result> WithdrawAsync(int accountId, decimal amount);
     Task<Result> TransferAsync(int fromAccountId, int toAccountId, decimal amount);
     Task<Result<List<Transaction>>> GetTransactionHistoryAsync(int accountId);
+    Task<Result> DeleteAccount(int accountId);
 }

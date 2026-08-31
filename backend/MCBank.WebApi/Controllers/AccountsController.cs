@@ -1,13 +1,28 @@
 using MCBank.WebApi.Core.DTOs;
 using MCBank.WebApi.Core.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MCBank.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class AccountsController(IBankService bankService) : ControllerBase
 {
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetAccountById(int id)
+    {
+        var result = await bankService.GetAccountByIdAsync(id);
+
+        if (result.IsFailure)
+        {
+            return NotFound(result.Error);
+        }
+
+        return Ok(result.Value);
+    }
+    
     [HttpGet]
     public async Task<IActionResult> GetAccounts()
     {
@@ -84,5 +99,18 @@ public class AccountsController(IBankService bankService) : ControllerBase
         }
 
         return Ok(result.Value);
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteAccountById(int id)
+    {
+        var result = await bankService.DeleteAccount(id);
+
+        if (result.IsFailure)
+        {
+            return NotFound(result.Error);
+        }
+
+        return Ok();
     }
 }

@@ -7,18 +7,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MCBank.WebApi.Application;
 
-public class BankService(AppDbContext context) : IBankService
+public class BankService(AppDbContext dbContext) : IBankService
 {
     public async Task<Result<Account>> GetAccountByIdAsync(int id)
     {
-        var account = await context.Accounts.FindAsync(id);
+        var account = await dbContext.Accounts.FindAsync(id);
 
         return account == null ? Result<Account>.Failure("Счет не найден") : Result<Account>.Success(account);
     }
 
     public async Task<Result<List<Account>>> GetAllAccountsAsync()
     {
-        var accounts = await context.Accounts
+        var accounts = await dbContext.Accounts
             .AsNoTracking()
             .ToListAsync();
 
@@ -35,8 +35,8 @@ public class BankService(AppDbContext context) : IBankService
             Iban = iban
         };
 
-        await context.Accounts.AddAsync(account);
-        await context.SaveChangesAsync();
+        await dbContext.Accounts.AddAsync(account);
+        await dbContext.SaveChangesAsync();
 
         return Result<Account>.Success(account);
     }
@@ -48,7 +48,7 @@ public class BankService(AppDbContext context) : IBankService
             return Result.Failure("Сумма не может быть меньше или равна 0");
         }
 
-        var account = await context.Accounts.FindAsync(accountId);
+        var account = await dbContext.Accounts.FindAsync(accountId);
 
         if (account == null)
         {
@@ -64,8 +64,8 @@ public class BankService(AppDbContext context) : IBankService
             CreatedAt = DateTime.UtcNow
         };
 
-        await context.Transactions.AddAsync(transaction);
-        await context.SaveChangesAsync();
+        await dbContext.Transactions.AddAsync(transaction);
+        await dbContext.SaveChangesAsync();
 
         return Result.Success();
     }
@@ -77,7 +77,7 @@ public class BankService(AppDbContext context) : IBankService
             return Result.Failure("Сумма не может быть меньше или равна 0");
         }
 
-        var account = await context.Accounts.FindAsync(accountId);
+        var account = await dbContext.Accounts.FindAsync(accountId);
 
         if (account == null)
         {
@@ -98,8 +98,8 @@ public class BankService(AppDbContext context) : IBankService
             CreatedAt = DateTime.UtcNow
         };
 
-        await context.Transactions.AddAsync(transaction);
-        await context.SaveChangesAsync();
+        await dbContext.Transactions.AddAsync(transaction);
+        await dbContext.SaveChangesAsync();
 
         return Result.Success();
     }
@@ -111,14 +111,14 @@ public class BankService(AppDbContext context) : IBankService
             return Result.Failure("Сумма не может быть меньше или равна 0");
         }
 
-        var fromAccount = await context.Accounts.FindAsync(fromAccountId);
+        var fromAccount = await dbContext.Accounts.FindAsync(fromAccountId);
 
         if (fromAccount == null)
         {
             return Result.Failure("Счет отправителя не найден");
         }
         
-        var toAccount = await context.Accounts.FindAsync(toAccountId);
+        var toAccount = await dbContext.Accounts.FindAsync(toAccountId);
 
         if (toAccount == null)
         {
@@ -149,16 +149,16 @@ public class BankService(AppDbContext context) : IBankService
             CreatedAt = DateTime.UtcNow
         };
 
-        await context.Transactions.AddAsync(fromTransaction);
-        await context.Transactions.AddAsync(toTransaction);
-        await context.SaveChangesAsync();
+        await dbContext.Transactions.AddAsync(fromTransaction);
+        await dbContext.Transactions.AddAsync(toTransaction);
+        await dbContext.SaveChangesAsync();
 
         return Result.Success();
     }
 
     public async Task<Result<List<Transaction>>> GetTransactionHistoryAsync(int accountId)
     {
-        var exists = await context.Accounts
+        var exists = await dbContext.Accounts
             .AsNoTracking()
             .AnyAsync(a => a.Id == accountId);
 
@@ -167,11 +167,26 @@ public class BankService(AppDbContext context) : IBankService
             return Result<List<Transaction>>.Failure("Счет не найден");
         }
 
-        var transactions = await context.Transactions
+        var transactions = await dbContext.Transactions
             .Where(t => t.AccountId == accountId)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
 
         return Result<List<Transaction>>.Success(transactions);
+    }
+
+    public async Task<Result> DeleteAccount(int accountId)
+    {
+        var account = await dbContext.Accounts.FindAsync(accountId);
+
+        if (account == null)
+        {
+            return Result.Failure("Счет не найден");
+        }
+
+        account.IsDeleted = true;
+        await dbContext.SaveChangesAsync();
+        
+        return Result.Success();
     }
 }

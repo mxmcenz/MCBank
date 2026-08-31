@@ -1,0 +1,36 @@
+using MCBank.WebApi.Core.DTOs;
+using MCBank.WebApi.Core.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+
+namespace MCBank.WebApi.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class AuthController(IAuthService authService) : ControllerBase
+{
+    [HttpPost("register")]
+    public async Task<ActionResult<TokenPairDto>> Register([FromBody] RegisterRequest request)
+    {
+        var result = await authService.RegisterAsync(request.Username, request.Password);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(result.Error);
+        }
+
+        return Ok(result.Value);
+    }
+
+    [HttpPost("login")]
+    public async Task<ActionResult<TokenPairDto>> Login([FromBody] LoginRequest request)
+    {
+        var result = await authService.LoginAsync(request.Username, request.Password);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(result.Error);
+        }
+
+        return Ok(result.Value);
+    }
+}
