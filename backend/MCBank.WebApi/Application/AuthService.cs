@@ -21,7 +21,7 @@ public class AuthService(
     {
         if (await dbContext.Users.AnyAsync(u => u.Username == username))
         {
-            return Result<TokenPairDto>.Failure("Пользователь с таким именем уже зарегистрирован");
+            return Result<TokenPairDto>.Failure("Пользователь с таким именем уже зарегистрирован", ErrorType.Conflict);
         }
 
         var newUser = new User
@@ -50,11 +50,11 @@ public class AuthService(
         var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Username == username);
 
         if (user == null || !passwordHasher.Verify(user.PasswordHash, password))
-            return Result<TokenPairDto>.Failure("Неверное имя пользователя или пароль");
+            return Result<TokenPairDto>.Failure("Неверное имя пользователя или пароль", ErrorType.Unauthorized);
 
         var accessToken = jwtService.GenerateAccessToken(user.Id);
         var refreshToken = jwtService.GenerateRefreshToken();
-        
+
         return Result<TokenPairDto>.Success(new TokenPairDto
         {
             AccessToken = accessToken,

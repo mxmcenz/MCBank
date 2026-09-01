@@ -1,5 +1,6 @@
 using MCBank.WebApi.Application.DTOs;
 using MCBank.WebApi.Application.Interfaces;
+using MCBank.WebApi.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,12 +18,7 @@ public class AccountsController(IBankService bankService) : ControllerBase
     {
         var result = await bankService.GetAccountByIdAsync(accountId, CurrentUserId);
 
-        if (result.IsFailure)
-        {
-            return NotFound(result.Error);
-        }
-
-        return Ok(result.Value);
+        return result.ToActionResult();
     }
 
     [HttpGet]
@@ -30,12 +26,7 @@ public class AccountsController(IBankService bankService) : ControllerBase
     {
         var result = await bankService.GetAllAccountsAsync(CurrentUserId);
 
-        if (result.IsFailure)
-        {
-            return NotFound(result.Error);
-        }
-
-        return Ok(result.Value);
+        return result.ToActionResult();
     }
 
     [HttpPost]
@@ -44,11 +35,9 @@ public class AccountsController(IBankService bankService) : ControllerBase
         var result = await bankService.CreateAccountAsync(CurrentUserId);
 
         if (result.IsFailure)
-        {
-            return BadRequest(result.Error);
-        }
+            return result.ToActionResult();
 
-        return CreatedAtAction(nameof(GetAccounts), new { id = result.Value.Id }, result.Value);
+        return CreatedAtAction(nameof(GetAccountById), new { id = result.Value.Id }, result.Value);
     }
 
     [HttpPost("deposit")]
@@ -56,12 +45,7 @@ public class AccountsController(IBankService bankService) : ControllerBase
     {
         var result = await bankService.DepositAsync(request.AccountId, CurrentUserId, request.Amount);
 
-        if (result.IsFailure)
-        {
-            return BadRequest(result.Error);
-        }
-
-        return Ok();
+        return result.ToActionResult();
     }
 
     [HttpPost("withdraw")]
@@ -69,12 +53,7 @@ public class AccountsController(IBankService bankService) : ControllerBase
     {
         var result = await bankService.WithdrawAsync(request.AccountId, CurrentUserId, request.Amount);
 
-        if (result.IsFailure)
-        {
-            return BadRequest(result.Error);
-        }
-
-        return Ok();
+        return result.ToActionResult();
     }
 
     [HttpPost("transfer")]
@@ -83,12 +62,7 @@ public class AccountsController(IBankService bankService) : ControllerBase
         var result =
             await bankService.TransferAsync(request.FromAccountId, request.ToAccountId, CurrentUserId, request.Amount);
 
-        if (result.IsFailure)
-        {
-            return BadRequest(result.Error);
-        }
-
-        return Ok();
+        return result.ToActionResult();
     }
 
     [HttpGet("{accountId:int}/transactions")]
@@ -96,12 +70,7 @@ public class AccountsController(IBankService bankService) : ControllerBase
     {
         var result = await bankService.GetTransactionHistoryAsync(accountId, CurrentUserId);
 
-        if (result.IsFailure)
-        {
-            return NotFound(result.Error);
-        }
-
-        return Ok(result.Value);
+        return result.ToActionResult();
     }
 
     [HttpDelete("{accountId:int}")]
@@ -109,11 +78,6 @@ public class AccountsController(IBankService bankService) : ControllerBase
     {
         var result = await bankService.DeleteAccount(accountId, CurrentUserId);
 
-        if (result.IsFailure)
-        {
-            return NotFound(result.Error);
-        }
-
-        return Ok();
+        return result.ToActionResult();
     }
 }

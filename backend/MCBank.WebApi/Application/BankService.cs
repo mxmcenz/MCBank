@@ -16,12 +16,12 @@ public class BankService(AppDbContext dbContext) : IBankService
 
         if (account == null)
         {
-            return Result<AccountResponse>.Failure("Счет не найден");
+            return Result<AccountResponse>.Failure("Счет не найден", ErrorType.NotFound);
         }
 
         if (account.UserId != currentUserId)
         {
-            return Result<AccountResponse>.Failure("Доступ запрещен");
+            return Result<AccountResponse>.Failure("Доступ запрещен", ErrorType.Forbidden);
         }
 
         var dto = new AccountResponse(account.Id, account.Iban, account.Balance);
@@ -45,7 +45,7 @@ public class BankService(AppDbContext dbContext) : IBankService
     {
         var userExists = await dbContext.Users.AnyAsync(u => u.Id == userId);
         if (!userExists)
-            return Result<AccountResponse>.Failure("Пользователь не найден");
+            return Result<AccountResponse>.Failure("Пользователь не найден", ErrorType.NotFound);
 
         var randomDigits = string.Concat(Enumerable.Range(0, 18).Select(_ => Random.Shared.Next(0, 10)));
         var iban = $"KZ{randomDigits}";
@@ -70,19 +70,19 @@ public class BankService(AppDbContext dbContext) : IBankService
     {
         if (amount <= 0)
         {
-            return Result.Failure("Сумма не может быть меньше или равна 0");
+            return Result.Failure("Сумма не может быть меньше или равна 0", ErrorType.Validation);
         }
 
         var account = await dbContext.Accounts.FindAsync(accountId);
 
         if (account == null)
         {
-            return Result.Failure("Счет не найден");
+            return Result.Failure("Счет не найден", ErrorType.NotFound);
         }
 
         if (account.UserId != currentUserId)
         {
-            return Result.Failure("Доступ запрещен");
+            return Result.Failure("Доступ запрещен", ErrorType.Forbidden);
         }
 
         account.Balance += amount;
@@ -104,19 +104,19 @@ public class BankService(AppDbContext dbContext) : IBankService
     {
         if (amount <= 0)
         {
-            return Result.Failure("Сумма не может быть меньше или равна 0");
+            return Result.Failure("Сумма не может быть меньше или равна 0", ErrorType.Validation);
         }
 
         var account = await dbContext.Accounts.FindAsync(accountId);
 
         if (account == null)
         {
-            return Result.Failure("Счет не найден");
+            return Result.Failure("Счет не найден", ErrorType.NotFound);
         }
 
         if (account.UserId != currentUserId)
         {
-            return Result.Failure("Доступ запрещен");
+            return Result.Failure("Доступ запрещен", ErrorType.Forbidden);
         }
 
         if (amount > account.Balance)
@@ -143,26 +143,26 @@ public class BankService(AppDbContext dbContext) : IBankService
     {
         if (amount <= 0)
         {
-            return Result.Failure("Сумма не может быть меньше или равна 0");
+            return Result.Failure("Сумма не может быть меньше или равна 0", ErrorType.Validation);
         }
 
         var fromAccount = await dbContext.Accounts.FindAsync(fromAccountId);
 
         if (fromAccount == null)
         {
-            return Result.Failure("Счет отправителя не найден");
+            return Result.Failure("Счет отправителя не найден", ErrorType.NotFound);
         }
 
         if (fromAccount.UserId != currentUserId)
         {
-            return Result.Failure("Доступ запрещен");
+            return Result.Failure("Доступ запрещен", ErrorType.Forbidden);
         }
 
         var toAccount = await dbContext.Accounts.FindAsync(toAccountId);
 
         if (toAccount == null)
         {
-            return Result.Failure("Счет получателя не найден");
+            return Result.Failure("Счет получателя не найден", ErrorType.NotFound);
         }
 
         if (amount > fromAccount.Balance)
@@ -202,12 +202,12 @@ public class BankService(AppDbContext dbContext) : IBankService
 
         if (account == null)
         {
-            return Result<List<Transaction>>.Failure("Счет не найден");
+            return Result<List<Transaction>>.Failure("Счет не найден", ErrorType.NotFound);
         }
 
         if (account.UserId != currentUserId)
         {
-            return Result<List<Transaction>>.Failure("Доступ запрещен");
+            return Result<List<Transaction>>.Failure("Доступ запрещен", ErrorType.Forbidden);
         }
 
         var transactions = await dbContext.Transactions
@@ -224,12 +224,12 @@ public class BankService(AppDbContext dbContext) : IBankService
 
         if (account == null)
         {
-            return Result.Failure("Счет не найден");
+            return Result.Failure("Счет не найден", ErrorType.NotFound);
         }
 
         if (account.UserId != currentUserId)
         {
-            return Result.Failure("Доступ запрещен");
+            return Result.Failure("Доступ запрещен", ErrorType.Forbidden);
         }
 
         account.IsDeleted = true;
