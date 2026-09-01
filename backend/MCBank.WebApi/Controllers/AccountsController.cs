@@ -11,11 +11,11 @@ namespace MCBank.WebApi.Controllers;
 public class AccountsController(IBankService bankService) : ControllerBase
 {
     private int CurrentUserId => int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
-    
-    [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetAccountById(int id)
+
+    [HttpGet("{accountId:int}")]
+    public async Task<IActionResult> GetAccountById(int accountId)
     {
-        var result = await bankService.GetAccountByIdAsync(id);
+        var result = await bankService.GetAccountByIdAsync(accountId, CurrentUserId);
 
         if (result.IsFailure)
         {
@@ -24,7 +24,7 @@ public class AccountsController(IBankService bankService) : ControllerBase
 
         return Ok(result.Value);
     }
-    
+
     [HttpGet]
     public async Task<IActionResult> GetAccounts()
     {
@@ -54,7 +54,7 @@ public class AccountsController(IBankService bankService) : ControllerBase
     [HttpPost("deposit")]
     public async Task<IActionResult> Deposit([FromBody] TransactionRequest request)
     {
-        var result = await bankService.DepositAsync(request.AccountId, request.Amount);
+        var result = await bankService.DepositAsync(request.AccountId, CurrentUserId, request.Amount);
 
         if (result.IsFailure)
         {
@@ -67,7 +67,7 @@ public class AccountsController(IBankService bankService) : ControllerBase
     [HttpPost("withdraw")]
     public async Task<IActionResult> Withdraw([FromBody] TransactionRequest request)
     {
-        var result = await bankService.WithdrawAsync(request.AccountId, request.Amount);
+        var result = await bankService.WithdrawAsync(request.AccountId, CurrentUserId, request.Amount);
 
         if (result.IsFailure)
         {
@@ -80,7 +80,8 @@ public class AccountsController(IBankService bankService) : ControllerBase
     [HttpPost("transfer")]
     public async Task<IActionResult> Transfer([FromBody] TransferRequest request)
     {
-        var result = await bankService.TransferAsync(request.FromAccountId, request.ToAccountId, request.Amount);
+        var result =
+            await bankService.TransferAsync(request.FromAccountId, request.ToAccountId, CurrentUserId, request.Amount);
 
         if (result.IsFailure)
         {
@@ -90,10 +91,10 @@ public class AccountsController(IBankService bankService) : ControllerBase
         return Ok();
     }
 
-    [HttpGet("{id:int}/transactions")]
-    public async Task<IActionResult> GetAccountTransactions(int id)
+    [HttpGet("{accountId:int}/transactions")]
+    public async Task<IActionResult> GetAccountTransactions(int accountId)
     {
-        var result = await bankService.GetTransactionHistoryAsync(id);
+        var result = await bankService.GetTransactionHistoryAsync(accountId, CurrentUserId);
 
         if (result.IsFailure)
         {
@@ -103,10 +104,10 @@ public class AccountsController(IBankService bankService) : ControllerBase
         return Ok(result.Value);
     }
 
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> DeleteAccountById(int id)
+    [HttpDelete("{accountId:int}")]
+    public async Task<IActionResult> DeleteAccountById(int accountId)
     {
-        var result = await bankService.DeleteAccount(id);
+        var result = await bankService.DeleteAccount(accountId, CurrentUserId);
 
         if (result.IsFailure)
         {

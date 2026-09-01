@@ -10,13 +10,18 @@ namespace MCBank.WebApi.Application;
 
 public class BankService(AppDbContext dbContext) : IBankService
 {
-    public async Task<Result<AccountResponse>> GetAccountByIdAsync(int id)
+    public async Task<Result<AccountResponse>> GetAccountByIdAsync(int accountId, int currentUserId)
     {
-        var account = await dbContext.Accounts.FindAsync(id);
+        var account = await dbContext.Accounts.FindAsync(accountId);
 
         if (account == null)
         {
             return Result<AccountResponse>.Failure("Счет не найден");
+        }
+
+        if (account.UserId != currentUserId)
+        {
+            return Result<AccountResponse>.Failure("Доступ запрещен");
         }
 
         var dto = new AccountResponse(account.Id, account.Iban, account.Balance);
@@ -61,7 +66,7 @@ public class BankService(AppDbContext dbContext) : IBankService
         return Result<AccountResponse>.Success(dto);
     }
 
-    public async Task<Result> DepositAsync(int accountId, decimal amount)
+    public async Task<Result> DepositAsync(int accountId, int currentUserId, decimal amount)
     {
         if (amount <= 0)
         {
@@ -73,6 +78,11 @@ public class BankService(AppDbContext dbContext) : IBankService
         if (account == null)
         {
             return Result.Failure("Счет не найден");
+        }
+
+        if (account.UserId != currentUserId)
+        {
+            return Result.Failure("Доступ запрещен");
         }
 
         account.Balance += amount;
@@ -90,7 +100,7 @@ public class BankService(AppDbContext dbContext) : IBankService
         return Result.Success();
     }
 
-    public async Task<Result> WithdrawAsync(int accountId, decimal amount)
+    public async Task<Result> WithdrawAsync(int accountId, int currentUserId, decimal amount)
     {
         if (amount <= 0)
         {
@@ -102,6 +112,11 @@ public class BankService(AppDbContext dbContext) : IBankService
         if (account == null)
         {
             return Result.Failure("Счет не найден");
+        }
+
+        if (account.UserId != currentUserId)
+        {
+            return Result.Failure("Доступ запрещен");
         }
 
         if (amount > account.Balance)
@@ -124,7 +139,7 @@ public class BankService(AppDbContext dbContext) : IBankService
         return Result.Success();
     }
 
-    public async Task<Result> TransferAsync(int fromAccountId, int toAccountId, decimal amount)
+    public async Task<Result> TransferAsync(int fromAccountId, int toAccountId, int currentUserId, decimal amount)
     {
         if (amount <= 0)
         {
@@ -136,6 +151,11 @@ public class BankService(AppDbContext dbContext) : IBankService
         if (fromAccount == null)
         {
             return Result.Failure("Счет отправителя не найден");
+        }
+
+        if (fromAccount.UserId != currentUserId)
+        {
+            return Result.Failure("Доступ запрещен");
         }
 
         var toAccount = await dbContext.Accounts.FindAsync(toAccountId);
@@ -176,15 +196,18 @@ public class BankService(AppDbContext dbContext) : IBankService
         return Result.Success();
     }
 
-    public async Task<Result<List<Transaction>>> GetTransactionHistoryAsync(int accountId)
+    public async Task<Result<List<Transaction>>> GetTransactionHistoryAsync(int accountId, int currentUserId)
     {
-        var exists = await dbContext.Accounts
-            .AsNoTracking()
-            .AnyAsync(a => a.Id == accountId);
+        var account = await dbContext.Accounts.FindAsync(accountId);
 
-        if (!exists)
+        if (account == null)
         {
             return Result<List<Transaction>>.Failure("Счет не найден");
+        }
+
+        if (account.UserId != currentUserId)
+        {
+            return Result<List<Transaction>>.Failure("Доступ запрещен");
         }
 
         var transactions = await dbContext.Transactions
@@ -195,13 +218,18 @@ public class BankService(AppDbContext dbContext) : IBankService
         return Result<List<Transaction>>.Success(transactions);
     }
 
-    public async Task<Result> DeleteAccount(int accountId)
+    public async Task<Result> DeleteAccount(int accountId, int currentUserId)
     {
         var account = await dbContext.Accounts.FindAsync(accountId);
 
         if (account == null)
         {
             return Result.Failure("Счет не найден");
+        }
+
+        if (account.UserId != currentUserId)
+        {
+            return Result.Failure("Доступ запрещен");
         }
 
         account.IsDeleted = true;
