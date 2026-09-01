@@ -1,12 +1,14 @@
+using MCBank.WebApi.Application.DTOs;
 using MCBank.WebApi.Core.Common;
+using MCBank.WebApi.Core.Entities;
 
-namespace MCBank.WebApi.Core.Interfaces;
+namespace MCBank.WebApi.Application.Interfaces;
 
 public interface IBankService
 {
-    Task<Result<Account>> GetAccountByIdAsync(int id);
-    Task<Result<List<Account>>> GetAllAccountsAsync();
-    Task<Result<Account>> CreateAccountAsync();
+    Task<Result<AccountResponse>> GetAccountByIdAsync(int accountId);
+    Task<Result<List<AccountResponse>>> GetAllAccountsAsync(int userId);
+    Task<Result<AccountResponse>> CreateAccountAsync(int userId);
     Task<Result> DepositAsync(int accountId, decimal amount);
     Task<Result> WithdrawAsync(int accountId, decimal amount);
     Task<Result> TransferAsync(int fromAccountId, int toAccountId, decimal amount);

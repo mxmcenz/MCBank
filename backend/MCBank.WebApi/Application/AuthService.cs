@@ -1,9 +1,9 @@
-using MCBank.WebApi.Core;
+using MCBank.WebApi.Application.DTOs;
+using MCBank.WebApi.Application.Interfaces;
 using MCBank.WebApi.Core.Common;
-using MCBank.WebApi.Core.DTOs;
-using MCBank.WebApi.Core.Interfaces;
-using MCBank.WebApi.Core.Settings;
+using MCBank.WebApi.Core.Entities;
 using MCBank.WebApi.Infrastructure;
+using MCBank.WebApi.Infrastructure.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -54,6 +54,7 @@ public class AuthService(
 
         var accessToken = jwtService.GenerateAccessToken(user.Id);
         var refreshToken = jwtService.GenerateRefreshToken();
+        
         return Result<TokenPairDto>.Success(new TokenPairDto
         {
             AccessToken = accessToken,

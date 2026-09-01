@@ -1,4 +1,4 @@
-using MCBank.WebApi.Core;
+using MCBank.WebApi.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

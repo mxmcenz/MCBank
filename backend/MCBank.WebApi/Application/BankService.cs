@@ -1,7 +1,8 @@
-using MCBank.WebApi.Core;
+using MCBank.WebApi.Application.DTOs;
+using MCBank.WebApi.Application.Interfaces;
 using MCBank.WebApi.Core.Common;
+using MCBank.WebApi.Core.Entities;
 using MCBank.WebApi.Core.Enums;
-using MCBank.WebApi.Core.Interfaces;
 using MCBank.WebApi.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,36 +10,55 @@ namespace MCBank.WebApi.Application;
 
 public class BankService(AppDbContext dbContext) : IBankService
 {
-    public async Task<Result<Account>> GetAccountByIdAsync(int id)
+    public async Task<Result<AccountResponse>> GetAccountByIdAsync(int id)
     {
         var account = await dbContext.Accounts.FindAsync(id);
 
-        return account == null ? Result<Account>.Failure("Счет не найден") : Result<Account>.Success(account);
+        if (account == null)
+        {
+            return Result<AccountResponse>.Failure("Счет не найден");
+        }
+
+        var dto = new AccountResponse(account.Id, account.Iban, account.Balance);
+
+        return Result<AccountResponse>.Success(dto);
     }
 
-    public async Task<Result<List<Account>>> GetAllAccountsAsync()
+    public async Task<Result<List<AccountResponse>>> GetAllAccountsAsync(int userId)
     {
         var accounts = await dbContext.Accounts
             .AsNoTracking()
+            .Where(a => a.UserId == userId)
             .ToListAsync();
 
-        return Result<List<Account>>.Success(accounts);
+        var dto = accounts.Select(a => new AccountResponse(a.Id, a.Iban, a.Balance)).ToList();
+
+        return Result<List<AccountResponse>>.Success(dto);
     }
 
-    public async Task<Result<Account>> CreateAccountAsync()
+    public async Task<Result<AccountResponse>> CreateAccountAsync(int userId)
     {
+        var userExists = await dbContext.Users.AnyAsync(u => u.Id == userId);
+        if (!userExists)
+            return Result<AccountResponse>.Failure("Пользователь не найден");
+
         var randomDigits = string.Concat(Enumerable.Range(0, 18).Select(_ => Random.Shared.Next(0, 10)));
         var iban = $"KZ{randomDigits}";
 
         var account = new Account
         {
-            Iban = iban
+            Iban = iban,
+            UserId = userId,
+            Balance = 0,
+            IsDeleted = false
         };
 
         await dbContext.Accounts.AddAsync(account);
         await dbContext.SaveChangesAsync();
 
-        return Result<Account>.Success(account);
+        var dto = new AccountResponse(account.Id, account.Iban, account.Balance);
+
+        return Result<AccountResponse>.Success(dto);
     }
 
     public async Task<Result> DepositAsync(int accountId, decimal amount)
@@ -117,14 +137,14 @@ public class BankService(AppDbContext dbContext) : IBankService
         {
             return Result.Failure("Счет отправителя не найден");
         }
-        
+
         var toAccount = await dbContext.Accounts.FindAsync(toAccountId);
 
         if (toAccount == null)
         {
             return Result.Failure("Счет получателя не найден");
         }
-        
+
         if (amount > fromAccount.Balance)
         {
             return Result.Failure("Недостаточно средств");
@@ -186,7 +206,7 @@ public class BankService(AppDbContext dbContext) : IBankService
 
         account.IsDeleted = true;
         await dbContext.SaveChangesAsync();
-        
+
         return Result.Success();
     }
 }

@@ -1,3 +1,3 @@
-namespace MCBank.WebApi.Core.DTOs;
+namespace MCBank.WebApi.Application.DTOs;
 
 public record TransactionRequest(int AccountId, decimal Amount);

@@ -1,4 +1,4 @@
-namespace MCBank.WebApi.Core.Interfaces;
+namespace MCBank.WebApi.Application.Interfaces;
 
 public interface IPasswordHasher
 {

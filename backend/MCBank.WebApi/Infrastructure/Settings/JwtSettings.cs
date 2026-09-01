@@ -1,4 +1,4 @@
-namespace MCBank.WebApi.Core.Settings;
+namespace MCBank.WebApi.Infrastructure.Settings;
 
 public sealed record JwtSettings
 {

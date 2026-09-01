@@ -1,5 +1,5 @@
-using MCBank.WebApi.Core.DTOs;
-using MCBank.WebApi.Core.Interfaces;
+using MCBank.WebApi.Application.DTOs;
+using MCBank.WebApi.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,6 +10,8 @@ namespace MCBank.WebApi.Controllers;
 [Authorize]
 public class AccountsController(IBankService bankService) : ControllerBase
 {
+    private int CurrentUserId => int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+    
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetAccountById(int id)
     {
@@ -26,7 +28,7 @@ public class AccountsController(IBankService bankService) : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAccounts()
     {
-        var result = await bankService.GetAllAccountsAsync();
+        var result = await bankService.GetAllAccountsAsync(CurrentUserId);
 
         if (result.IsFailure)
         {
@@ -39,7 +41,7 @@ public class AccountsController(IBankService bankService) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateAccount()
     {
-        var result = await bankService.CreateAccountAsync();
+        var result = await bankService.CreateAccountAsync(CurrentUserId);
 
         if (result.IsFailure)
         {

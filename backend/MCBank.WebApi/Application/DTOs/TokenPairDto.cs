@@ -1,4 +1,4 @@
-namespace MCBank.WebApi.Core.DTOs;
+namespace MCBank.WebApi.Application.DTOs;
 
 public sealed record TokenPairDto
 {

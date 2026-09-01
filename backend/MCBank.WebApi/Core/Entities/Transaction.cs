@@ -1,6 +1,6 @@
 using MCBank.WebApi.Core.Enums;
 
-namespace MCBank.WebApi.Core;
+namespace MCBank.WebApi.Core.Entities;
 
 public sealed record Transaction
 {

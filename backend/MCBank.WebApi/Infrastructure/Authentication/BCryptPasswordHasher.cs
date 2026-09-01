@@ -1,6 +1,6 @@
-using MCBank.WebApi.Core.Interfaces;
+using MCBank.WebApi.Application.Interfaces;
 
-namespace MCBank.WebApi.Application;
+namespace MCBank.WebApi.Infrastructure.Authentication;
 
 public class BCryptPasswordHasher : IPasswordHasher
 {

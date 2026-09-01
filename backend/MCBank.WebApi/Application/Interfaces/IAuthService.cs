@@ -1,7 +1,7 @@
+using MCBank.WebApi.Application.DTOs;
 using MCBank.WebApi.Core.Common;
-using MCBank.WebApi.Core.DTOs;
 
-namespace MCBank.WebApi.Core.Interfaces;
+namespace MCBank.WebApi.Application.Interfaces;
 
 public interface IAuthService
 {

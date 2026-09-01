@@ -2,12 +2,12 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using MCBank.WebApi.Core.Interfaces;
-using MCBank.WebApi.Core.Settings;
+using MCBank.WebApi.Application.Interfaces;
+using MCBank.WebApi.Infrastructure.Settings;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace MCBank.WebApi.Application;
+namespace MCBank.WebApi.Infrastructure.Authentication;
 
 public class JwtService(IOptions<JwtSettings> options) : IJwtService
 {

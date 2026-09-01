@@ -1,5 +1,5 @@
-using MCBank.WebApi.Core.DTOs;
-using MCBank.WebApi.Core.Interfaces;
+using MCBank.WebApi.Application.DTOs;
+using MCBank.WebApi.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MCBank.WebApi.Controllers;
