@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCBank.Cli", "MCBank.Cli\MC
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCBank.WebApi", "MCBank.WebApi\MCBank.WebApi.csproj", "{B8BCDA9B-D9BA-4062-8D70-9879725F94D2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCBank.UnitTests", "MCBank.UnitTests\MCBank.UnitTests.csproj", "{CF539308-965D-4F86-B34B-F33D6DC47434}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{B8BCDA9B-D9BA-4062-8D70-9879725F94D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B8BCDA9B-D9BA-4062-8D70-9879725F94D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B8BCDA9B-D9BA-4062-8D70-9879725F94D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF539308-965D-4F86-B34B-F33D6DC47434}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF539308-965D-4F86-B34B-F33D6DC47434}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF539308-965D-4F86-B34B-F33D6DC47434}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF539308-965D-4F86-B34B-F33D6DC47434}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

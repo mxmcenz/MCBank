@@ -19,6 +19,9 @@ public class AuthService(
 
     public async Task<Result<TokenPairDto>> RegisterAsync(string username, string password)
     {
+        username = username.Trim();
+        password = password.Trim();
+        
         if (await dbContext.Users.AnyAsync(u => u.Username == username))
         {
             return Result<TokenPairDto>.Failure("Пользователь с таким именем уже зарегистрирован", ErrorType.Conflict);
@@ -47,6 +50,9 @@ public class AuthService(
 
     public async Task<Result<TokenPairDto>> LoginAsync(string username, string password)
     {
+        username = username.Trim();
+        password = password.Trim();
+        
         var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Username == username);
 
         if (user == null || !passwordHasher.Verify(user.PasswordHash, password))
