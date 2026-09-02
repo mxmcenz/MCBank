@@ -1,4 +1,5 @@
 using System.Text;
+using FluentValidation;
 using MCBank.WebApi.Application;
 using MCBank.WebApi.Application.Interfaces;
 using MCBank.WebApi.Infrastructure.Authentication;
@@ -42,6 +43,8 @@ public static class DependencyInjection
                     ClockSkew = TimeSpan.Zero
                 };
             });
+        
+        services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<IJwtService, JwtService>();

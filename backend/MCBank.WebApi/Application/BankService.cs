@@ -68,11 +68,6 @@ public class BankService(AppDbContext dbContext) : IBankService
 
     public async Task<Result> DepositAsync(int accountId, int currentUserId, decimal amount)
     {
-        if (amount <= 0)
-        {
-            return Result.Failure("Сумма не может быть меньше или равна 0", ErrorType.Validation);
-        }
-
         var account = await dbContext.Accounts.FindAsync(accountId);
 
         if (account == null)
@@ -102,11 +97,6 @@ public class BankService(AppDbContext dbContext) : IBankService
 
     public async Task<Result> WithdrawAsync(int accountId, int currentUserId, decimal amount)
     {
-        if (amount <= 0)
-        {
-            return Result.Failure("Сумма не может быть меньше или равна 0", ErrorType.Validation);
-        }
-
         var account = await dbContext.Accounts.FindAsync(accountId);
 
         if (account == null)
@@ -141,11 +131,6 @@ public class BankService(AppDbContext dbContext) : IBankService
 
     public async Task<Result> TransferAsync(int fromAccountId, int toAccountId, int currentUserId, decimal amount)
     {
-        if (amount <= 0)
-        {
-            return Result.Failure("Сумма не может быть меньше или равна 0", ErrorType.Validation);
-        }
-
         var fromAccount = await dbContext.Accounts.FindAsync(fromAccountId);
 
         if (fromAccount == null)
