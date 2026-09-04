@@ -37,7 +37,7 @@ public class AccountsController(IBankService bankService) : ControllerBase
         if (result.IsFailure)
             return result.ToActionResult();
 
-        return CreatedAtAction(nameof(GetAccountById), new { id = result.Value.Id }, result.Value);
+        return CreatedAtAction(nameof(GetAccountById), new { accountId = result.Value.Id }, result.Value);
     }
 
     [HttpPost("deposit")]
