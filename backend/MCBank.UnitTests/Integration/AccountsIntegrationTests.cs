@@ -224,8 +224,168 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IClassFixture<
         account.Should().NotBeNull();
         account.Balance.Should().Be(0);
     }
+
+    [Fact]
+    public async Task Deposit_NonExistentAccount_ReturnsNotFound()
+    {
+        //Arrange
+        var client = factory.CreateClient();
+        var uniqueName = $"user_{Guid.NewGuid()}";
+        var newUser = new RegisterRequest { Username = uniqueName, Password = "password" };
+        var registerResponse = await client.PostAsJsonAsync("/api/auth/register", newUser);
+        registerResponse.EnsureSuccessStatusCode();
+        var tokenPairDto = await registerResponse.Content.ReadFromJsonAsync<TokenPairDto>();
+        var token = tokenPairDto!.AccessToken;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var invalidAccountId = 999999;
+        var amount = 1000;
+        var transactionRequest = new TransactionRequest(invalidAccountId, amount);
+        
+        //Act
+        var response = await client.PostAsJsonAsync("/api/accounts/deposit", transactionRequest);
+        
+        //Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Withdraw_ValidAmount_UpdatesBalanceAndRecordsTransaction()
+    {
+        //Arrange
+        var client = factory.CreateClient();
+        var uniqueName = $"user_{Guid.NewGuid()}";
+        var newUser = new RegisterRequest { Username = uniqueName, Password = "password" };
+        var registerResponse = await client.PostAsJsonAsync("/api/auth/register", newUser);
+        registerResponse.EnsureSuccessStatusCode();
+        var tokenPairDto = await registerResponse.Content.ReadFromJsonAsync<TokenPairDto>();
+        var token = tokenPairDto!.AccessToken;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var createAccountResponse = await client.PostAsync("/api/accounts", null);
+        createAccountResponse.EnsureSuccessStatusCode();
+        var newAccount = await createAccountResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var accountId = newAccount!.Id;
+        var depositAmount = 1000;
+        var withdrawAmount = 500;
+        var finalBalance = depositAmount - withdrawAmount;
+        var depositTransactionRequest = new TransactionRequest(accountId, depositAmount);
+        await client.PostAsJsonAsync("/api/accounts/deposit", depositTransactionRequest);
+        var withdrawTransactionRequest = new TransactionRequest(accountId, withdrawAmount);
+
+        //Act
+        var withdrawResponse = await client.PostAsJsonAsync("/api/accounts/withdraw", withdrawTransactionRequest);
+
+        //Assert
+        withdrawResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var account = await dbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId);
+        account.Should().NotBeNull();
+        account.Balance.Should().Be(finalBalance);
+        var transaction = await dbContext.Transactions
+            .OrderByDescending(t => t.CreatedAt)
+            .FirstOrDefaultAsync(t => t.AccountId == account.Id);
+        transaction.Should().NotBeNull();
+        transaction.Type.Should().Be(TransactionType.Withdraw);
+    }
+
+    [Fact]
+    public async Task Withdraw_InsufficientFunds_ReturnsBadRequest()
+    {
+        //Arrange
+        var client = factory.CreateClient();
+        var uniqueName = $"user_{Guid.NewGuid()}";
+        var newUser = new RegisterRequest { Username = uniqueName, Password = "password" };
+        var registerResponse = await client.PostAsJsonAsync("/api/auth/register", newUser);
+        registerResponse.EnsureSuccessStatusCode();
+        var tokenPairDto = await registerResponse.Content.ReadFromJsonAsync<TokenPairDto>();
+        var token = tokenPairDto!.AccessToken;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var createAccountResponse = await client.PostAsync("/api/accounts", null);
+        createAccountResponse.EnsureSuccessStatusCode();
+        var newAccount = await createAccountResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var accountId = newAccount!.Id;
+        var depositAmount = 100;
+        var withdrawAmount = 500;
+        var depositTransactionRequest = new TransactionRequest(accountId, depositAmount);
+        await client.PostAsJsonAsync("/api/accounts/deposit", depositTransactionRequest);
+        var withdrawTransactionRequest = new TransactionRequest(accountId, withdrawAmount);
+
+        //Act
+        var withdrawResponse = await client.PostAsJsonAsync("/api/accounts/withdraw", withdrawTransactionRequest);
+
+        //Assert
+        withdrawResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var account = await dbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId);
+        account.Should().NotBeNull();
+        account.Balance.Should().Be(depositAmount);
+    }
+
+    [Fact]
+    public async Task Withdraw_OtherUserAccount_ReturnsForbidden()
+    {
+        //Arrange
+        var client = factory.CreateClient();
+        var ownerUserName = $"user_{Guid.NewGuid()}";
+        var owner = new RegisterRequest { Username = ownerUserName, Password = "password" };
+        var registerOwnerResponse = await client.PostAsJsonAsync("/api/auth/register", owner);
+        registerOwnerResponse.EnsureSuccessStatusCode();
+        var ownerTokenPairDto = await registerOwnerResponse.Content.ReadFromJsonAsync<TokenPairDto>();
+        var ownerToken = ownerTokenPairDto!.AccessToken;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ownerToken);
+        
+        var ownerAccountResponse = await client.PostAsync("/api/accounts", null);
+        var ownerAccount = await ownerAccountResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var ownerAccountId = ownerAccount!.Id;
+
+        var otherUserName = $"user_{Guid.NewGuid()}";
+        var otherUser = new RegisterRequest { Username = otherUserName, Password = "password" };
+        var registerOtherUserResponse = await client.PostAsJsonAsync("/api/auth/register", otherUser);
+        registerOtherUserResponse.EnsureSuccessStatusCode();
+        var otherUserTokenPairDto = await registerOtherUserResponse.Content.ReadFromJsonAsync<TokenPairDto>();
+        var otherUserToken = otherUserTokenPairDto!.AccessToken;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", otherUserToken);
+
+        var amount = 1000;
+        var transactionRequest = new TransactionRequest(ownerAccountId, amount);
+        
+        //Act
+        var response = await client.PostAsJsonAsync("/api/accounts/withdraw", transactionRequest);
+        
+        //Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var account = await dbContext.Accounts.FirstOrDefaultAsync(a => a.Id == ownerAccountId);
+        account.Should().NotBeNull();
+        account.Balance.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Withdraw_NonExistentAccount_ReturnsNotFound()
+    {
+        //Arrange
+        var client = factory.CreateClient();
+        var uniqueName = $"user_{Guid.NewGuid()}";
+        var newUser = new RegisterRequest { Username = uniqueName, Password = "password" };
+        var registerResponse = await client.PostAsJsonAsync("/api/auth/register", newUser);
+        registerResponse.EnsureSuccessStatusCode();
+        var tokenPairDto = await registerResponse.Content.ReadFromJsonAsync<TokenPairDto>();
+        var token = tokenPairDto!.AccessToken;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var invalidAccountId = 999999;
+        var amount = 1000;
+        var transactionRequest = new TransactionRequest(invalidAccountId, amount);
+        
+        //Act
+        var response = await client.PostAsJsonAsync("/api/accounts/withdraw", transactionRequest);
+        
+        //Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
     
-    //Withdraw Tests
+    //Transfer Tests
 
     [Fact]
     public async Task CreateAccount_WhenAuthenticated_ReturnsSuccess()
