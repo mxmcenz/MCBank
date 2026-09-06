@@ -1,3 +1,5 @@
+using MCBank.WebApi.Core.Enums;
+
 namespace MCBank.WebApi.Core.Entities;
 
 public sealed record Account
@@ -5,6 +7,7 @@ public sealed record Account
     public int Id { get; init; }
     public string Iban { get; init; } = string.Empty;
     public decimal Balance { get; set; }
+    public AccountType Type { get; init; }
     
     public int UserId { get; init; }
     public User User { get; init; } = null!;

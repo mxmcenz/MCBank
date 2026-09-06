@@ -12,6 +12,7 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(a => a.Balance).HasPrecision(18, 2);
         builder.Property(a => a.Iban).IsRequired().HasMaxLength(34);
         builder.HasIndex(a => a.Iban).IsUnique();
+        builder.Property(a => a.Type).HasConversion<string>();
         builder.HasQueryFilter(a => !a.IsDeleted);
         builder
             .HasOne(a => a.User)
