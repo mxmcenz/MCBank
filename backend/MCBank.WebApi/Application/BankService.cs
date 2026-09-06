@@ -24,7 +24,7 @@ public class BankService(AppDbContext dbContext) : IBankService
             return Result<AccountResponse>.Failure("Доступ запрещен", ErrorType.Forbidden);
         }
 
-        var dto = new AccountResponse(account.Id, account.Iban, account.Balance);
+        var dto = new AccountResponse(account.Id, account.Iban, account.Balance, account.Type);
 
         return Result<AccountResponse>.Success(dto);
     }
@@ -36,12 +36,12 @@ public class BankService(AppDbContext dbContext) : IBankService
             .Where(a => a.UserId == userId)
             .ToListAsync();
 
-        var dto = accounts.Select(a => new AccountResponse(a.Id, a.Iban, a.Balance)).ToList();
+        var dto = accounts.Select(a => new AccountResponse(a.Id, a.Iban, a.Balance, a.Type)).ToList();
 
         return Result<List<AccountResponse>>.Success(dto);
     }
 
-    public async Task<Result<AccountResponse>> CreateAccountAsync(int userId)
+    public async Task<Result<AccountResponse>> CreateAccountAsync(int userId, AccountType type)
     {
         var userExists = await dbContext.Users.AnyAsync(u => u.Id == userId);
         if (!userExists)
@@ -55,13 +55,14 @@ public class BankService(AppDbContext dbContext) : IBankService
             Iban = iban,
             UserId = userId,
             Balance = 0,
-            IsDeleted = false
+            Type = type,
+            IsDeleted = false,
         };
 
         await dbContext.Accounts.AddAsync(account);
         await dbContext.SaveChangesAsync();
 
-        var dto = new AccountResponse(account.Id, account.Iban, account.Balance);
+        var dto = new AccountResponse(account.Id, account.Iban, account.Balance, account.Type);
 
         return Result<AccountResponse>.Success(dto);
     }

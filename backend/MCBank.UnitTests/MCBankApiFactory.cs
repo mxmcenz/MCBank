@@ -14,7 +14,7 @@ public class MCBankApiFactory : WebApplicationFactory<Program>
 
     public MCBankApiFactory()
     {
-        _connection = new SqliteConnection("DataSource=:memory");
+        _connection = new SqliteConnection("Data Source=InMemoryBank;Mode=Memory;Cache=Shared");
         _connection.Open();
     }
     

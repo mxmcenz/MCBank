@@ -1,5 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using MCBank.WebApi.Application.DTOs;
 
 namespace MCBank.UnitTests.Integration;
@@ -8,6 +10,11 @@ public class IntegrationTestBase(MCBankApiFactory factory) : IClassFixture<MCBan
 {
     protected readonly MCBankApiFactory Factory = factory;
     protected readonly HttpClient Client = factory.CreateClient();
+    protected readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
 
     protected async Task<string> AuthenticateAsync()
     {

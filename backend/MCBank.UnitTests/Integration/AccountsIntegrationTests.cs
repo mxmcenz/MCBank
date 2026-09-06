@@ -17,9 +17,10 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        var accountResponse = await Client.PostAsync("/api/accounts", null);
+        var accountResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
         accountResponse.EnsureSuccessStatusCode();
-        var createdAccount = await accountResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var createdAccount = await accountResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         createdAccount.Should().NotBeNull();
 
         //Act
@@ -27,10 +28,11 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
 
         //Assert
         getAccountResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var account = await getAccountResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var account = await getAccountResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         account.Should().NotBeNull();
         account.Id.Should().Be(createdAccount.Id);
         account.Iban.Should().Be(createdAccount.Iban);
+        account.Type.Should().Be(AccountType.Current);
     }
 
     [Fact]
@@ -38,9 +40,10 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        var ownerAccountResponse = await Client.PostAsync("/api/accounts", null);
+        var ownerAccountResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
         ownerAccountResponse.EnsureSuccessStatusCode();
-        var ownerAccount = await ownerAccountResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var ownerAccount = await ownerAccountResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         ownerAccount.Should().NotBeNull();
         var ownerAccountId = ownerAccount.Id;
 
@@ -58,9 +61,9 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         var uniqueName = await AuthenticateAsync();
-        await Client.PostAsync("/api/accounts", null);
-        await Client.PostAsync("/api/accounts", null);
-        await Client.PostAsync("/api/accounts", null);
+        await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
+        await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
+        await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
 
         //Act
         var response = await Client.GetAsync("/api/accounts");
@@ -71,7 +74,7 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var accountsCount = await dbContext.Accounts.CountAsync(u => u.User.Username == uniqueName);
         accountsCount.Should().Be(3);
-        var accounts = await response.Content.ReadFromJsonAsync<List<AccountResponse>>();
+        var accounts = await response.Content.ReadFromJsonAsync<List<AccountResponse>>(JsonOptions);
         accounts.Should().NotBeNull();
         accounts.Count.Should().Be(accountsCount);
     }
@@ -81,9 +84,9 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        await Client.PostAsync("/api/accounts", null);
-        await Client.PostAsync("/api/accounts", null);
-        await Client.PostAsync("/api/accounts", null);
+        await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
+        await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
+        await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
         await AuthenticateAsync();
 
         //Act
@@ -91,9 +94,28 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
 
         //Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var accounts = await response.Content.ReadFromJsonAsync<List<AccountResponse>>();
+        var accounts = await response.Content.ReadFromJsonAsync<List<AccountResponse>>(JsonOptions);
         accounts.Should().NotBeNull();
         accounts.Count.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task CreateAccount_WhenAuthenticated_ReturnsSuccess()
+    {
+        //Arrange
+        var uniqueName = await AuthenticateAsync();
+
+        //Act
+        var response = await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
+
+        //Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        using var scope = Factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Username == uniqueName);
+        user.Should().NotBeNull();
+        var record = await dbContext.Accounts.AnyAsync(x => x.UserId == user.Id);
+        record.Should().BeTrue();
     }
 
     [Fact]
@@ -103,7 +125,7 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
         var client = Factory.CreateClient();
 
         //Act
-        var response = await client.PostAsync("/api/accounts", null);
+        var response = await client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
 
         //Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -114,9 +136,10 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        var createAccountResponse = await Client.PostAsync("/api/accounts", null);
+        var createAccountResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
         createAccountResponse.EnsureSuccessStatusCode();
-        var newAccount = await createAccountResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var newAccount = await createAccountResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         var accountId = newAccount!.Id;
         var amount = 1000;
         var transactionRequest = new TransactionRequest(accountId, amount);
@@ -141,8 +164,9 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        var ownerAccountResponse = await Client.PostAsync("/api/accounts", null);
-        var ownerAccount = await ownerAccountResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var ownerAccountResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
+        var ownerAccount = await ownerAccountResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         var ownerAccountId = ownerAccount!.Id;
         await AuthenticateAsync();
         var amount = 1000;
@@ -181,9 +205,10 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        var createAccountResponse = await Client.PostAsync("/api/accounts", null);
+        var createAccountResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
         createAccountResponse.EnsureSuccessStatusCode();
-        var newAccount = await createAccountResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var newAccount = await createAccountResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         var accountId = newAccount!.Id;
         var depositAmount = 1000;
         var withdrawAmount = 500;
@@ -214,9 +239,10 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        var createAccountResponse = await Client.PostAsync("/api/accounts", null);
+        var createAccountResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
         createAccountResponse.EnsureSuccessStatusCode();
-        var newAccount = await createAccountResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var newAccount = await createAccountResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         var accountId = newAccount!.Id;
         var depositAmount = 100;
         var withdrawAmount = 500;
@@ -241,8 +267,9 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        var ownerAccountResponse = await Client.PostAsync("/api/accounts", null);
-        var ownerAccount = await ownerAccountResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var ownerAccountResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
+        var ownerAccount = await ownerAccountResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         var ownerAccountId = ownerAccount!.Id;
         await AuthenticateAsync();
         var amount = 1000;
@@ -281,12 +308,14 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        var firstAccountCreateResponse = await Client.PostAsync("/api/accounts", null);
+        var firstAccountCreateResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
         firstAccountCreateResponse.EnsureSuccessStatusCode();
-        var secondAccountCreateResponse = await Client.PostAsync("/api/accounts", null);
+        var secondAccountCreateResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
         secondAccountCreateResponse.EnsureSuccessStatusCode();
-        var firstAccount = await firstAccountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>();
-        var secondAccount = await secondAccountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var firstAccount = await firstAccountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
+        var secondAccount = await secondAccountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         var depositTransactionRequest = new TransactionRequest(firstAccount!.Id, 1000);
         await Client.PostAsJsonAsync("/api/accounts/deposit", depositTransactionRequest);
         var transferRequest = new TransferRequest(firstAccount.Id, secondAccount!.Id, 500);
@@ -323,12 +352,14 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        var firstAccountCreateResponse = await Client.PostAsync("/api/accounts", null);
+        var firstAccountCreateResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
         firstAccountCreateResponse.EnsureSuccessStatusCode();
-        var secondAccountCreateResponse = await Client.PostAsync("/api/accounts", null);
+        var secondAccountCreateResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
         secondAccountCreateResponse.EnsureSuccessStatusCode();
-        var firstAccount = await firstAccountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>();
-        var secondAccount = await secondAccountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var firstAccount = await firstAccountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
+        var secondAccount = await secondAccountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         var depositTransactionRequest = new TransactionRequest(firstAccount!.Id, 100);
         await Client.PostAsJsonAsync("/api/accounts/deposit", depositTransactionRequest);
         var transferRequest = new TransferRequest(firstAccount.Id, secondAccount!.Id, 500);
@@ -353,8 +384,9 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        var ownerAccountCreateResponse = await Client.PostAsync("/api/accounts", null);
-        var ownerAccount = await ownerAccountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var ownerAccountCreateResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
+        var ownerAccount = await ownerAccountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         var depositOwnerAccountRequest = new TransactionRequest(ownerAccount!.Id, 1000);
         await Client.PostAsJsonAsync("/api/accounts/deposit", depositOwnerAccountRequest);
         await AuthenticateAsync();
@@ -379,9 +411,10 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        var accountCreateResponse = await Client.PostAsync("/api/accounts", null);
+        var accountCreateResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
         accountCreateResponse.EnsureSuccessStatusCode();
-        var account = await accountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var account = await accountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         var depositTransactionRequest = new TransactionRequest(account!.Id, 1000);
         await Client.PostAsJsonAsync("/api/accounts/deposit", depositTransactionRequest);
         var nonExistentAccountId = 999999;
@@ -399,9 +432,10 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        var accountCreateResponse = await Client.PostAsync("/api/accounts", null);
+        var accountCreateResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
         accountCreateResponse.EnsureSuccessStatusCode();
-        var account = await accountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var account = await accountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         var depositTransactionRequest = new TransactionRequest(account!.Id, 1000);
         var withdrawTransactionRequest = new TransactionRequest(account.Id, 500);
         await Client.PostAsJsonAsync("/api/accounts/deposit", depositTransactionRequest);
@@ -412,7 +446,7 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
 
         //Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var transactions = await response.Content.ReadFromJsonAsync<List<Transaction>>();
+        var transactions = await response.Content.ReadFromJsonAsync<List<Transaction>>(JsonOptions);
         transactions.Should().NotBeNull();
         transactions.Count.Should().Be(2);
         transactions[1].Amount.Should().Be(1000);
@@ -426,8 +460,9 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        var ownerAccountCreateResponse = await Client.PostAsync("/api/accounts", null);
-        var ownerAccount = await ownerAccountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var ownerAccountCreateResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
+        var ownerAccount = await ownerAccountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         var depositOwnerAccountRequest = new TransactionRequest(ownerAccount!.Id, 1000);
         await Client.PostAsJsonAsync("/api/accounts/deposit", depositOwnerAccountRequest);
         await AuthenticateAsync();
@@ -444,9 +479,10 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        var accountCreateResponse = await Client.PostAsync("/api/accounts", null);
+        var accountCreateResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
         accountCreateResponse.EnsureSuccessStatusCode();
-        var account = await accountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var account = await accountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
 
         //Act
         var response = await Client.DeleteAsync($"/api/accounts/{account!.Id}");
@@ -459,7 +495,7 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
         deletedAccount.Should().NotBeNull();
         deletedAccount.IsDeleted.Should().Be(true);
         var accountsResponse = await Client.GetAsync("/api/accounts");
-        var accounts = await accountsResponse.Content.ReadFromJsonAsync<List<AccountResponse>>();
+        var accounts = await accountsResponse.Content.ReadFromJsonAsync<List<AccountResponse>>(JsonOptions);
         accounts.Should().NotBeNull();
         accounts.Count.Should().Be(0);
     }
@@ -469,8 +505,9 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-        var ownerAccountCreateResponse = await Client.PostAsync("/api/accounts", null);
-        var ownerAccount = await ownerAccountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        var ownerAccountCreateResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
+        var ownerAccount = await ownerAccountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         await AuthenticateAsync();
 
         //Act
@@ -492,10 +529,10 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
     {
         //Arrange
         await AuthenticateAsync();
-
-        var accountCreateResponse = await Client.PostAsync("/api/accounts", null);
+        var accountCreateResponse =
+            await Client.PostAsJsonAsync("/api/accounts", new CreateAccountRequest(AccountType.Current));
         accountCreateResponse.EnsureSuccessStatusCode();
-        await accountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>();
+        await accountCreateResponse.Content.ReadFromJsonAsync<AccountResponse>(JsonOptions);
         var nonExistentAccountId = 999999;
 
         //Act
@@ -503,24 +540,5 @@ public class AccountsIntegrationTests(MCBankApiFactory factory) : IntegrationTes
 
         //Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-    }
-
-    [Fact]
-    public async Task CreateAccount_WhenAuthenticated_ReturnsSuccess()
-    {
-        //Arrange
-        var uniqueName = await AuthenticateAsync();
-
-        //Act
-        var response = await Client.PostAsync("/api/accounts", null);
-
-        //Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
-        using var scope = Factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Username == uniqueName);
-        user.Should().NotBeNull();
-        var record = await dbContext.Accounts.AnyAsync(x => x.UserId == user.Id);
-        record.Should().BeTrue();
     }
 }

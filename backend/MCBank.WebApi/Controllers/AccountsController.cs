@@ -30,9 +30,9 @@ public class AccountsController(IBankService bankService) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateAccount()
+    public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest request)
     {
-        var result = await bankService.CreateAccountAsync(CurrentUserId);
+        var result = await bankService.CreateAccountAsync(CurrentUserId, request.AccountType);
 
         if (result.IsFailure)
             return result.ToActionResult();

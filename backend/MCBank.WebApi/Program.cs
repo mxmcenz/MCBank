@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using MCBank.WebApi.Infrastructure;
 using MCBank.WebApi.Infrastructure.Filters;
 
@@ -8,6 +9,9 @@ builder.Services.AddSwaggerDocumentation();
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<ValidationFilter>();
+}).AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
 var app = builder.Build();
