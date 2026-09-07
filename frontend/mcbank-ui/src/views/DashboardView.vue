@@ -1,7 +1,11 @@
 <script setup>
 import {ref, onMounted} from "vue";
 import {getAccounts, createAccount} from "../api/accounts.js";
+import {useRouter} from "vue-router";
+import {useAuthStore} from "../stores/auth.js";
 
+const router = useRouter()
+const authStore = useAuthStore()
 const accounts = ref([])
 const loading = ref(true)
 const selectedType = ref('Current')
@@ -26,6 +30,11 @@ async function handleCreate() {
   }
 }
 
+function handleLogout() {
+  authStore.logout()
+  router.push('/login')
+}
+
 onMounted(() => {
   fetchAccounts()
 })
@@ -34,6 +43,8 @@ onMounted(() => {
 <template>
 <div>
   <h1>Мои счета</h1>
+
+  <button @click="handleLogout" style="float: right">Выйти</button>
 
   <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ccc;">
     <h3>Открыть новый счет</h3>
