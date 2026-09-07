@@ -1,9 +1,10 @@
 <script setup>
 import {ref, onMounted} from "vue";
-import {getAccounts} from "../api/accounts.js";
+import {getAccounts, createAccount} from "../api/accounts.js";
 
 const accounts = ref([])
 const loading = ref(true)
+const selectedType = ref('Current')
 
 async function fetchAccounts() {
   try {
@@ -16,6 +17,15 @@ async function fetchAccounts() {
   }
 }
 
+async function handleCreate() {
+  try {
+    await createAccount(selectedType.value)
+    await fetchAccounts()
+  } catch (error) {
+    alert('Ошибка при создании счета')
+  }
+}
+
 onMounted(() => {
   fetchAccounts()
 })
@@ -24,6 +34,15 @@ onMounted(() => {
 <template>
 <div>
   <h1>Мои счета</h1>
+
+  <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ccc;">
+    <h3>Открыть новый счет</h3>
+    <select v-model = "selectedType">
+      <option value="Current">Текущий</option>
+      <option value="Savings">Сберегательный</option>
+    </select>
+    <button @click="handleCreate()">Создать</button>
+  </div>
 
   <div v-if="loading">Загрузка...</div>
 
