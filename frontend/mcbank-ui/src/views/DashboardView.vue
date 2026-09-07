@@ -1,6 +1,6 @@
 <script setup>
 import {ref, onMounted} from "vue";
-import {getAccounts, createAccount} from "../api/accounts.js";
+import {getAccounts, createAccount, deposit, withdraw} from "../api/accounts.js";
 import {useRouter} from "vue-router";
 import {useAuthStore} from "../stores/auth.js";
 
@@ -9,6 +9,28 @@ const authStore = useAuthStore()
 const accounts = ref([])
 const loading = ref(true)
 const selectedType = ref('Current')
+const selectedAccountId = ref(null)
+const amount = ref(0)
+
+async function handleTransaction(type) {
+  if (!selectedAccountId.value || amount.value <= 0){
+    alert('Выберите счет и введите корректную сумму')
+    return
+  }
+
+  try {
+    if (type === 'deposit') {
+      await deposit(selectedAccountId.value, amount.value)
+    } else {
+      await withdraw(selectedAccountId.value, amount.value)
+    }
+    amount.value = 0
+    await fetchAccounts()
+    alert('Успешно')
+  } catch (error) {
+    alert(error.response?.data?.Message || 'Ошибка транзакции')
+  }
+}
 
 async function fetchAccounts() {
   try {
@@ -42,9 +64,9 @@ onMounted(() => {
 
 <template>
 <div>
-  <h1>Мои счета</h1>
-
   <button @click="handleLogout" style="float: right">Выйти</button>
+
+  <h1>Мои счета</h1>
 
   <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ccc;">
     <h3>Открыть новый счет</h3>
@@ -56,7 +78,6 @@ onMounted(() => {
   </div>
 
   <div v-if="loading">Загрузка...</div>
-
   <div v-else>
     <ul v-if="accounts.length > 0">
       <li v-for="acc in accounts" :key="acc.id">
@@ -64,6 +85,31 @@ onMounted(() => {
       </li>
     </ul>
     <p v-else>У вас пока нет открытых счетов.</p>
+  </div>
+
+  <div v-if="accounts.length > 0" style="margin-top: 30px; padding: 15px; background: #f9f9f9;">
+    <hr />
+    <h3>Операции по счету</h3>
+    <div>
+      <label>Счет: </label>
+      <select v-model="selectedAccountId">
+        <option :value="null">Выберите счет</option>
+        <option v-for="acc in accounts" :key="acc.id" :value="acc.id">
+          {{acc.iban}} ({{acc.balance}} KZT)
+        </option>
+      </select>
+    </div>
+
+    <div style="margin-top: 10px;">
+      <label>Сумма: </label>
+      <input v-model="amount" type="number" placeholder="Введите сумму" />
+    </div>
+
+    <div style="margin-top: 10px;">
+      <button @click="handleTransaction('deposit')">Пополнить</button>
+      <button @click="handleTransaction('withdraw')" style="margin-left: 10px;">Снять</button>
+    </div>
+
   </div>
 </div>
 </template>
