@@ -27,3 +27,7 @@ export function transfer (fromAccountId, toAccountId, amount) {
 export function getHistory(accountId) {
     return api.get(`/accounts/${accountId}/transactions`)
 }
+
+export function deleteAccount(accountId) {
+    return api.delete(`/accounts/${accountId}`)
+}

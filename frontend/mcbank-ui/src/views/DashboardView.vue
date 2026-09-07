@@ -1,6 +1,6 @@
 <script setup>
 import {ref, onMounted} from "vue";
-import {getAccounts, createAccount, deposit, withdraw, transfer, getHistory} from "../api/accounts.js";
+import {getAccounts, createAccount, deposit, withdraw, transfer, getHistory, deleteAccount} from "../api/accounts.js";
 import {useRouter} from "vue-router";
 import {useAuthStore} from "../stores/auth.js";
 import {watch} from "vue";
@@ -16,6 +16,17 @@ const transferFromId = ref(null)
 const transferToId = ref(null)
 const transferAmount = ref(0)
 const transactions = ref([])
+
+async function handleDelete(id) {
+  if (!confirm('Вы уверены?')) return
+
+  try {
+    await deleteAccount(id)
+    await fetchAccounts()
+  } catch (error) {
+    alert(error.response?.data?.Message || 'Ошибка при удалении');
+  }
+}
 
 async function fetchHistory(id) {
   if (!id) {
@@ -120,7 +131,7 @@ onMounted(() => {
   <div v-else>
     <ul v-if="accounts.length > 0">
       <li v-for="acc in accounts" :key="acc.id">
-        <strong>{{acc.iban}}</strong> - {{acc.balance}} KZT ({{acc.type}})
+        <strong>{{acc.iban}}</strong> - {{acc.balance}} KZT ({{acc.type}}) <button @click="handleDelete(acc.id)">Удалить</button>
       </li>
     </ul>
     <p v-else>У вас пока нет открытых счетов.</p>
