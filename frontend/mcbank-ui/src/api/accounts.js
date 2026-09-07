@@ -15,3 +15,11 @@ export function deposit(accountId, amount) {
 export function withdraw(accountId, amount) {
     return api.post('/accounts/withdraw', {accountId, amount: Number(amount)})
 }
+
+export function transfer (fromAccountId, toAccountId, amount) {
+    return api.post('/accounts/transfer', {
+        fromAccountId,
+        toAccountId,
+        amount: Number(amount)
+    });
+}

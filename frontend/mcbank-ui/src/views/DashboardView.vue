@@ -1,6 +1,6 @@
 <script setup>
 import {ref, onMounted} from "vue";
-import {getAccounts, createAccount, deposit, withdraw} from "../api/accounts.js";
+import {getAccounts, createAccount, deposit, withdraw, transfer} from "../api/accounts.js";
 import {useRouter} from "vue-router";
 import {useAuthStore} from "../stores/auth.js";
 
@@ -11,6 +11,25 @@ const loading = ref(true)
 const selectedType = ref('Current')
 const selectedAccountId = ref(null)
 const amount = ref(0)
+const transferFromId = ref(null)
+const transferToId = ref(null)
+const transferAmount = ref(0)
+
+async function handleTransfer() {
+  if (!transferFromId.value || !transferToId.value || transferAmount.value <= 0) {
+    alert('Заполните все поля для перевода')
+    return
+  }
+
+  try {
+    await transfer(transferFromId.value, transferToId.value, transferAmount.value)
+    transferAmount.value = 0
+    await fetchAccounts()
+    alert('Перевод выполнен')
+  } catch (error) {
+    alert(error.response?.data?.Message || 'Ошибка перевода')
+  }
+}
 
 async function handleTransaction(type) {
   if (!selectedAccountId.value || amount.value <= 0){
@@ -108,6 +127,29 @@ onMounted(() => {
     <div style="margin-top: 10px;">
       <button @click="handleTransaction('deposit')">Пополнить</button>
       <button @click="handleTransaction('withdraw')" style="margin-left: 10px;">Снять</button>
+    </div>
+
+  </div>
+
+  <div v-if="accounts.length > 1" style="margin-top: 30px; padding: 15px; border: 1px dashed blue;">
+    <h3>Перевод между своими счетами</h3>
+    <div>
+      <label>Откуда: </label>
+      <select v-model="transferFromId">
+        <option v-for="acc in accounts" :key="acc.id" :value="acc.id">{{acc.iban}}</option>
+      </select>
+    </div>
+
+    <div style="margin-top: 10px;">
+      <label>Куда: </label>
+      <select v-model="transferToId">
+        <option v-for="acc in accounts" :key="acc.id" :value="acc.id">{{acc.iban}}</option>
+      </select>
+    </div>
+
+    <div style="margin-top: 10px;">
+      <input v-model="transferAmount" type="number" placeholder="Сумма перевода" />
+      <button @click="handleTransfer">Перевести</button>
     </div>
 
   </div>
