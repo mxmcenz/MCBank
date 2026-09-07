@@ -23,3 +23,7 @@ export function transfer (fromAccountId, toAccountId, amount) {
         amount: Number(amount)
     });
 }
+
+export function getHistory(accountId) {
+    return api.get(`/accounts/${accountId}/transactions`)
+}

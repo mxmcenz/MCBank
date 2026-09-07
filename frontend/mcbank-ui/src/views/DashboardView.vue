@@ -1,8 +1,9 @@
 <script setup>
 import {ref, onMounted} from "vue";
-import {getAccounts, createAccount, deposit, withdraw, transfer} from "../api/accounts.js";
+import {getAccounts, createAccount, deposit, withdraw, transfer, getHistory} from "../api/accounts.js";
 import {useRouter} from "vue-router";
 import {useAuthStore} from "../stores/auth.js";
+import {watch} from "vue";
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -14,6 +15,25 @@ const amount = ref(0)
 const transferFromId = ref(null)
 const transferToId = ref(null)
 const transferAmount = ref(0)
+const transactions = ref([])
+
+async function fetchHistory(id) {
+  if (!id) {
+    transactions.value = []
+    return
+  }
+
+  try {
+    const response = await getHistory(id)
+    transactions.value = response.data
+  } catch (error) {
+    console.error('Ошибка истории: ', error)
+  }
+}
+
+watch(selectedAccountId, (newId) => {
+  fetchHistory(newId)
+})
 
 async function handleTransfer() {
   if (!transferFromId.value || !transferToId.value || transferAmount.value <= 0) {
@@ -151,8 +171,29 @@ onMounted(() => {
       <input v-model="transferAmount" type="number" placeholder="Сумма перевода" />
       <button @click="handleTransfer">Перевести</button>
     </div>
-
   </div>
+
+  <div v-if="selectedAccountId && transactions.length > 0" style="margin-top: 30px;">
+    <h3>История транзакций по счету</h3>
+    <table border="1" cellpadding="5" style="width: 100%; text-align: left">
+      <thead>
+        <tr>
+          <th>Тип</th>
+          <th>Сумма</th>
+          <th>Дата</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="t in transactions" :key="t.id">
+          <td>{{t.type}}</td>
+          <td>{{t.amount}}</td>
+          <td>{{new Date(t.createdAt).toLocaleString()}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p v-else-if="selectedAccountId">Транзакций пока нет</p>
+
 </div>
 </template>
 
