@@ -4,4 +4,6 @@ export function login(credentials) {
     return  api.post('/auth/login', credentials)
 }
 
-export default login
+export function register(credentials) {
+    return  api.post('/auth/register', credentials)
+}
