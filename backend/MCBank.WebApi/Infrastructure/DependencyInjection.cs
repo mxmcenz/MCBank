@@ -42,8 +42,21 @@ public static class DependencyInjection
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ClockSkew = TimeSpan.Zero
                 };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        if (context.Request.Cookies.TryGetValue("accessToken", out var token))
+                        {
+                            context.Token = token;
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
             });
-        
+
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();

@@ -11,10 +11,15 @@ const username = ref('');
 const password = ref('');
 
 async function handleLogin() {
-  const response = await login({username: username.value, password: password.value})
-  if (response && response.data.accessToken){
-    authStore.setToken(response.data.accessToken)
-    await router.push('/')
+  try {
+    const response = await login({username: username.value, password: password.value})
+
+    if (response.status === 200){
+      authStore.loginSuccess()
+      router.push('/')
+    }
+  } catch (error) {
+    alert('Ошибка авторизации')
   }
 }
 </script>

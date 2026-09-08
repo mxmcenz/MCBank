@@ -7,4 +7,6 @@ public interface IAuthService
 {
     Task<Result<TokenPairDto>> RegisterAsync(string username, string password);
     Task<Result<TokenPairDto>> LoginAsync(string username, string password);
+    Task<Result<TokenPairDto>> RefreshAsync(string refreshToken);
+    Task<Result> RevokeTokenAsync(string token);
 }

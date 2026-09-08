@@ -4,6 +4,7 @@ import {getAccounts, createAccount, deposit, withdraw, transfer, getHistory, del
 import {useRouter} from "vue-router";
 import {useAuthStore} from "../stores/auth.js";
 import {watch} from "vue";
+import {logout} from "../api/auth.js";
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -102,9 +103,14 @@ async function handleCreate() {
   }
 }
 
-function handleLogout() {
-  authStore.logout()
-  router.push('/login')
+async function handleLogout() {
+  try {
+    await logout();
+    authStore.logout();
+    router.push('/login')
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 onMounted(() => {
