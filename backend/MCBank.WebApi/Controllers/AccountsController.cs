@@ -21,6 +21,13 @@ public class AccountsController(IBankService bankService) : ControllerBase
         return result.ToActionResult();
     }
 
+    [HttpGet("iban/{iban}")]
+    public async Task<IActionResult> GetAccountIdByIban(string iban)
+    {
+        var result = await bankService.GetAccountIdByIbanAsync(iban);
+        return result.ToActionResult();
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetAccounts()
     {

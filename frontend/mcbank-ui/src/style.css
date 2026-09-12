@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+body {
+  @apply bg-gray-950 text-gray-100;
+}
+
+.bg-white {
+  @apply bg-gray-900;
+}
+
+.text-gray-900 {
+  @apply text-gray-100;
+}
+
+.text-gray-600, .text-gray-500 {
+  @apply text-gray-400;
+}
+
+.bg-gray-100 {
+  @apply bg-gray-950;
+}
+
+.border-gray-200, .border-gray-300, .border-gray-700 {
+  @apply border-gray-800;
+}
+
+input, select {
+  @apply bg-gray-800 border-gray-700 text-gray-100;
+}
+
+
+.bg-blue-600 { @apply bg-emerald-700 hover:bg-emerald-600; }
+.text-blue-400 { @apply text-emerald-400; }
+.text-blue-600 { @apply text-emerald-400; }
+.bg-gray-700 { @apply bg-gray-800 hover:bg-gray-700; }
+.bg-red-900 { @apply bg-gray-800 hover:bg-gray-700; }
+

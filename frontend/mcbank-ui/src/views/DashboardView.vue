@@ -1,219 +1,47 @@
 <script setup>
-import {ref, onMounted} from "vue";
-import {getAccounts, createAccount, deposit, withdraw, transfer, getHistory, deleteAccount} from "../api/accounts.js";
-import {useRouter} from "vue-router";
-import {useAuthStore} from "../stores/auth.js";
-import {watch} from "vue";
-import {logout} from "../api/auth.js";
+import { onMounted, ref } from 'vue';
+import { useAccountsStore } from '../stores/accounts';
+import AccountCard from '../components/AccountCard.vue';
 
-const router = useRouter()
-const authStore = useAuthStore()
-const accounts = ref([])
-const loading = ref(true)
-const selectedType = ref('Current')
-const selectedAccountId = ref(null)
-const amount = ref(0)
-const transferFromId = ref(null)
-const transferToId = ref(null)
-const transferAmount = ref(0)
-const transactions = ref([])
-
-async function handleDelete(id) {
-  if (!confirm('Вы уверены?')) return
-
-  try {
-    await deleteAccount(id)
-    await fetchAccounts()
-  } catch (error) {
-    alert(error.response?.data?.Message || 'Ошибка при удалении');
-  }
-}
-
-async function fetchHistory(id) {
-  if (!id) {
-    transactions.value = []
-    return
-  }
-
-  try {
-    const response = await getHistory(id)
-    transactions.value = response.data
-  } catch (error) {
-    console.error('Ошибка истории: ', error)
-  }
-}
-
-watch(selectedAccountId, (newId) => {
-  fetchHistory(newId)
-})
-
-async function handleTransfer() {
-  if (!transferFromId.value || !transferToId.value || transferAmount.value <= 0) {
-    alert('Заполните все поля для перевода')
-    return
-  }
-
-  try {
-    await transfer(transferFromId.value, transferToId.value, transferAmount.value)
-    transferAmount.value = 0
-    await fetchAccounts()
-    alert('Перевод выполнен')
-  } catch (error) {
-    alert(error.response?.data?.Message || 'Ошибка перевода')
-  }
-}
-
-async function handleTransaction(type) {
-  if (!selectedAccountId.value || amount.value <= 0){
-    alert('Выберите счет и введите корректную сумму')
-    return
-  }
-
-  try {
-    if (type === 'deposit') {
-      await deposit(selectedAccountId.value, amount.value)
-    } else {
-      await withdraw(selectedAccountId.value, amount.value)
-    }
-    amount.value = 0
-    await fetchAccounts()
-    alert('Успешно')
-  } catch (error) {
-    alert(error.response?.data?.Message || 'Ошибка транзакции')
-  }
-}
-
-async function fetchAccounts() {
-  try {
-    const response = await getAccounts()
-    accounts.value = response.data
-  } catch (error) {
-    console.error('Ошибка при загрузке счетов:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-async function handleCreate() {
-  try {
-    await createAccount(selectedType.value)
-    await fetchAccounts()
-  } catch (error) {
-    alert('Ошибка при создании счета')
-  }
-}
-
-async function handleLogout() {
-  try {
-    await logout();
-    authStore.logout();
-    router.push('/login')
-  } catch (error) {
-    console.error(error)
-  }
-}
+const store = useAccountsStore();
+const selectedType = ref('Current');
 
 onMounted(() => {
-  fetchAccounts()
-})
+  store.fetchAccounts();
+});
+
+const handleCreate = async () => {
+  await store.create(selectedType.value);
+};
 </script>
 
 <template>
-<div>
-  <button @click="handleLogout" style="float: right">Выйти</button>
+  <div class="space-y-8">
+    <header class="flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-gray-900">Мои счета</h1>
+      <div class="flex items-center gap-4">
+        <select v-model="selectedType" class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+          <option value="Current">Текущий</option>
+          <option value="Savings">Сберегательный</option>
+        </select>
+        <button @click="$router.push('/transfer')" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+          Перевод
+        </button>
+        <button @click="handleCreate" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+          Открыть счет
+        </button>
+      </div>
+    </header>
 
-  <h1>Мои счета</h1>
-
-  <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ccc;">
-    <h3>Открыть новый счет</h3>
-    <select v-model = "selectedType">
-      <option value="Current">Текущий</option>
-      <option value="Savings">Сберегательный</option>
-    </select>
-    <button @click="handleCreate()">Создать</button>
-  </div>
-
-  <div v-if="loading">Загрузка...</div>
-  <div v-else>
-    <ul v-if="accounts.length > 0">
-      <li v-for="acc in accounts" :key="acc.id">
-        <strong>{{acc.iban}}</strong> - {{acc.balance}} KZT ({{acc.type}}) <button @click="handleDelete(acc.id)">Удалить</button>
-      </li>
-    </ul>
-    <p v-else>У вас пока нет открытых счетов.</p>
-  </div>
-
-  <div v-if="accounts.length > 0" style="margin-top: 30px; padding: 15px; background: #f9f9f9;">
-    <hr />
-    <h3>Операции по счету</h3>
-    <div>
-      <label>Счет: </label>
-      <select v-model="selectedAccountId">
-        <option :value="null">Выберите счет</option>
-        <option v-for="acc in accounts" :key="acc.id" :value="acc.id">
-          {{acc.iban}} ({{acc.balance}} KZT)
-        </option>
-      </select>
-    </div>
-
-    <div style="margin-top: 10px;">
-      <label>Сумма: </label>
-      <input v-model="amount" type="number" placeholder="Введите сумму" />
-    </div>
-
-    <div style="margin-top: 10px;">
-      <button @click="handleTransaction('deposit')">Пополнить</button>
-      <button @click="handleTransaction('withdraw')" style="margin-left: 10px;">Снять</button>
-    </div>
-
-  </div>
-
-  <div v-if="accounts.length > 1" style="margin-top: 30px; padding: 15px; border: 1px dashed blue;">
-    <h3>Перевод между своими счетами</h3>
-    <div>
-      <label>Откуда: </label>
-      <select v-model="transferFromId">
-        <option v-for="acc in accounts" :key="acc.id" :value="acc.id">{{acc.iban}}</option>
-      </select>
-    </div>
-
-    <div style="margin-top: 10px;">
-      <label>Куда: </label>
-      <select v-model="transferToId">
-        <option v-for="acc in accounts" :key="acc.id" :value="acc.id">{{acc.iban}}</option>
-      </select>
-    </div>
-
-    <div style="margin-top: 10px;">
-      <input v-model="transferAmount" type="number" placeholder="Сумма перевода" />
-      <button @click="handleTransfer">Перевести</button>
+    <div v-if="store.loading" class="text-center py-10 text-gray-500">Загрузка...</div>
+    
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <AccountCard
+        v-for="acc in store.accounts"
+        :key="acc.id"
+        :account="acc"
+        @click="$router.push(`/accounts/${acc.id}`)"
+      />
     </div>
   </div>
-
-  <div v-if="selectedAccountId && transactions.length > 0" style="margin-top: 30px;">
-    <h3>История транзакций по счету</h3>
-    <table border="1" cellpadding="5" style="width: 100%; text-align: left">
-      <thead>
-        <tr>
-          <th>Тип</th>
-          <th>Сумма</th>
-          <th>Дата</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="t in transactions" :key="t.id">
-          <td>{{t.type}}</td>
-          <td>{{t.amount}}</td>
-          <td>{{new Date(t.createdAt).toLocaleString()}}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <p v-else-if="selectedAccountId">Транзакций пока нет</p>
-
-</div>
 </template>
-
-<style scoped>
-
-</style>

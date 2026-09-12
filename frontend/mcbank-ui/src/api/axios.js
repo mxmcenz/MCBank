@@ -20,7 +20,7 @@ api.interceptors.response.use(
                 return api(originRequest);
             } catch (refreshError) {
                 authStore.logout();
-                window.location.href = '/login';
+                window.location.href = '/auth/login';
                 return Promise.reject(refreshError)
             }
         }

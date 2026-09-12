@@ -204,6 +204,15 @@ public class BankService(AppDbContext dbContext) : IBankService
         return Result<List<Transaction>>.Success(transactions);
     }
 
+    public async Task<Result<int>> GetAccountIdByIbanAsync(string iban)
+    {
+        var account = await dbContext.Accounts.FirstOrDefaultAsync(a => a.Iban == iban);
+        if (account == null)
+            return Result<int>.Failure("Счет не найден", ErrorType.NotFound);
+        
+        return Result<int>.Success(account.Id);
+    }
+
     public async Task<Result> DeleteAccount(int accountId, int currentUserId)
     {
         var account = await dbContext.Accounts.FindAsync(accountId);

@@ -1,7 +1,15 @@
 import api from "./axios.js";
 
+export function getAccountIdByIban(iban) {
+    return api.get(`/accounts/iban/${iban}`)
+}
+
 export function getAccounts() {
     return api.get('/accounts')
+}
+
+export function getAccountById(id){
+    return api.get(`/accounts/${id}`)
 }
 
 export function createAccount(type) {

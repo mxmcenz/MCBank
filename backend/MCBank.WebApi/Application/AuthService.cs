@@ -33,6 +33,8 @@ public class AuthService(
 
         await dbContext.Users.AddAsync(newUser);
         
+        await dbContext.SaveChangesAsync();
+        
         var accessToken = jwtService.GenerateAccessToken(newUser.Id);
         var refreshToken = jwtService.GenerateRefreshToken();
         var refreshTokenEntity = new RefreshToken
