@@ -1,5 +1,6 @@
 using MCBank.WebApi.Application.DTOs;
 using MCBank.WebApi.Application.Interfaces;
+using MCBank.WebApi.Application.Strategies;
 using MCBank.WebApi.Core.Common;
 using MCBank.WebApi.Core.Entities;
 using MCBank.WebApi.Core.Enums;
@@ -8,21 +9,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MCBank.WebApi.Application;
 
-public class BankService(AppDbContext dbContext) : IBankService
+public class BankService(AppDbContext dbContext, IAccountStrategyFactory accountFactory) : IBankService
 {
     public async Task<Result<AccountResponse>> GetAccountByIdAsync(int accountId, int currentUserId)
     {
         var account = await dbContext.Accounts.FindAsync(accountId);
 
         if (account == null)
-        {
             return Result<AccountResponse>.Failure("Счет не найден", ErrorType.NotFound);
-        }
 
         if (account.UserId != currentUserId)
-        {
             return Result<AccountResponse>.Failure("Доступ запрещен", ErrorType.Forbidden);
-        }
 
         var dto = new AccountResponse(account.Id, account.Iban, account.Balance, account.Type);
 
@@ -72,16 +69,19 @@ public class BankService(AppDbContext dbContext) : IBankService
         var account = await dbContext.Accounts.FindAsync(accountId);
 
         if (account == null)
-        {
             return Result.Failure("Счет не найден", ErrorType.NotFound);
-        }
 
         if (account.UserId != currentUserId)
-        {
             return Result.Failure("Доступ запрещен", ErrorType.Forbidden);
-        }
+
+        var strategy = accountFactory.GetStrategy(account.Type);
+        var validationResult = strategy.CanDeposit(amount);
+
+        if (validationResult.IsFailure)
+            return validationResult;
 
         account.Balance += amount;
+
         var transaction = new Transaction
         {
             AccountId = accountId,
@@ -101,21 +101,19 @@ public class BankService(AppDbContext dbContext) : IBankService
         var account = await dbContext.Accounts.FindAsync(accountId);
 
         if (account == null)
-        {
             return Result.Failure("Счет не найден", ErrorType.NotFound);
-        }
 
         if (account.UserId != currentUserId)
-        {
             return Result.Failure("Доступ запрещен", ErrorType.Forbidden);
-        }
 
-        if (amount > account.Balance)
-        {
-            return Result.Failure("Недостаточно средств");
-        }
+        var strategy = accountFactory.GetStrategy(account.Type);
+        var validationResult = strategy.CanWithdraw(amount, account.Balance);
+
+        if (validationResult.IsFailure)
+            return validationResult;
 
         account.Balance -= amount;
+
         var transaction = new Transaction
         {
             AccountId = accountId,
@@ -135,26 +133,27 @@ public class BankService(AppDbContext dbContext) : IBankService
         var fromAccount = await dbContext.Accounts.FindAsync(fromAccountId);
 
         if (fromAccount == null)
-        {
             return Result.Failure("Счет отправителя не найден", ErrorType.NotFound);
-        }
 
         if (fromAccount.UserId != currentUserId)
-        {
             return Result.Failure("Доступ запрещен", ErrorType.Forbidden);
-        }
 
         var toAccount = await dbContext.Accounts.FindAsync(toAccountId);
 
         if (toAccount == null)
-        {
             return Result.Failure("Счет получателя не найден", ErrorType.NotFound);
-        }
 
-        if (amount > fromAccount.Balance)
-        {
-            return Result.Failure("Недостаточно средств");
-        }
+        var fromAccountStrategy = accountFactory.GetStrategy(fromAccount.Type);
+        var fromAccountValidationResult = fromAccountStrategy.CanTransfer(amount, fromAccount.Balance);
+
+        if (fromAccountValidationResult.IsFailure)
+            return fromAccountValidationResult;
+
+        var toAccountStrategy = accountFactory.GetStrategy(toAccount.Type);
+        var toAccountValidationResult = toAccountStrategy.CanDeposit(amount);
+
+        if (toAccountValidationResult.IsFailure)
+            return toAccountValidationResult;
 
         fromAccount.Balance -= amount;
         toAccount.Balance += amount;
@@ -187,14 +186,10 @@ public class BankService(AppDbContext dbContext) : IBankService
         var account = await dbContext.Accounts.FindAsync(accountId);
 
         if (account == null)
-        {
             return Result<List<Transaction>>.Failure("Счет не найден", ErrorType.NotFound);
-        }
 
         if (account.UserId != currentUserId)
-        {
             return Result<List<Transaction>>.Failure("Доступ запрещен", ErrorType.Forbidden);
-        }
 
         var transactions = await dbContext.Transactions
             .Where(t => t.AccountId == accountId)
@@ -207,10 +202,9 @@ public class BankService(AppDbContext dbContext) : IBankService
     public async Task<Result<int>> GetAccountIdByIbanAsync(string iban)
     {
         var account = await dbContext.Accounts.FirstOrDefaultAsync(a => a.Iban == iban);
-        if (account == null)
-            return Result<int>.Failure("Счет не найден", ErrorType.NotFound);
-        
-        return Result<int>.Success(account.Id);
+        return account == null
+            ? Result<int>.Failure("Счет не найден", ErrorType.NotFound)
+            : Result<int>.Success(account.Id);
     }
 
     public async Task<Result> DeleteAccount(int accountId, int currentUserId)
@@ -218,14 +212,10 @@ public class BankService(AppDbContext dbContext) : IBankService
         var account = await dbContext.Accounts.FindAsync(accountId);
 
         if (account == null)
-        {
             return Result.Failure("Счет не найден", ErrorType.NotFound);
-        }
 
         if (account.UserId != currentUserId)
-        {
             return Result.Failure("Доступ запрещен", ErrorType.Forbidden);
-        }
 
         account.IsDeleted = true;
         await dbContext.SaveChangesAsync();

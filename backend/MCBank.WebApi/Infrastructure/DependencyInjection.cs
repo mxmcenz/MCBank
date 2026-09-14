@@ -2,6 +2,7 @@ using System.Text;
 using FluentValidation;
 using MCBank.WebApi.Application;
 using MCBank.WebApi.Application.Interfaces;
+using MCBank.WebApi.Application.Strategies;
 using MCBank.WebApi.Infrastructure.Authentication;
 using MCBank.WebApi.Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -63,6 +64,8 @@ public static class DependencyInjection
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IBankService, BankService>();
+
+        services.AddSingleton<IAccountStrategyFactory, AccountStrategyFactory>();
 
         return services;
     }
