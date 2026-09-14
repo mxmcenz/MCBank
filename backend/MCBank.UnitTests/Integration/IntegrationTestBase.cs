@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -21,9 +20,8 @@ public class IntegrationTestBase(MCBankApiFactory factory) : IClassFixture<MCBan
         var uniqueName = $"user_{Guid.NewGuid()}";
         var registerRequest = new RegisterRequest { Username = uniqueName, Password = "password" };
         var response = await Client.PostAsJsonAsync("/api/auth/register", registerRequest);
-        var tokenPairDto = await response.Content.ReadFromJsonAsync<TokenPairDto>();
-        var accessToken = tokenPairDto!.AccessToken;
-        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        response.EnsureSuccessStatusCode();
+
         return uniqueName;
     }
 }

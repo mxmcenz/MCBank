@@ -24,9 +24,9 @@ public class AuthorizationIntegrationTests(MCBankApiFactory factory) : IClassFix
         //Assert
         registerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var tokenPairDto = await registerResponse.Content.ReadFromJsonAsync<TokenPairDto>();
-        tokenPairDto.Should().NotBeNull();
-        tokenPairDto.AccessToken.Should().NotBeNullOrWhiteSpace();
+        var cookies = registerResponse.Headers.GetValues("Set-Cookie").ToList();
+        cookies.Should().Contain(c => c.StartsWith("accessToken="));
+        cookies.Should().Contain(c => c.StartsWith("refreshToken="));
 
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -72,9 +72,9 @@ public class AuthorizationIntegrationTests(MCBankApiFactory factory) : IClassFix
 
         //Assert
         loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var tokenPairDto = await loginResponse.Content.ReadFromJsonAsync<TokenPairDto>();
-        tokenPairDto.Should().NotBeNull();
-        tokenPairDto.AccessToken.Should().NotBeNullOrWhiteSpace();
+        var cookies = loginResponse.Headers.GetValues("Set-Cookie").ToList();
+        cookies.Should().Contain(c => c.StartsWith("accessToken="));
+        cookies.Should().Contain(c => c.StartsWith("refreshToken="));
     }
 
     [Fact]
