@@ -5,12 +5,19 @@ using MCBank.WebApi.Core.Common;
 using MCBank.WebApi.Core.Entities;
 using MCBank.WebApi.Core.Enums;
 using MCBank.WebApi.Infrastructure;
+using MCBank.WebApi.Infrastructure.Settings;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace MCBank.WebApi.Application;
 
-public class BankService(AppDbContext dbContext, IAccountStrategyFactory accountFactory) : IBankService
+public class BankService(
+    AppDbContext dbContext,
+    IAccountStrategyFactory accountFactory,
+    IOptions<SavingsSettings> savingsOptions) : IBankService
 {
+    private readonly SavingsSettings _savingsSettings = savingsOptions.Value;
+
     public async Task<Result<AccountResponse>> GetAccountByIdAsync(int accountId, int currentUserId)
     {
         var account = await dbContext.Accounts.FindAsync(accountId);
@@ -21,7 +28,13 @@ public class BankService(AppDbContext dbContext, IAccountStrategyFactory account
         if (account.UserId != currentUserId)
             return Result<AccountResponse>.Failure("Доступ запрещен", ErrorType.Forbidden);
 
-        var dto = new AccountResponse(account.Id, account.Iban, account.Balance, account.Type);
+        var dto = new AccountResponse(
+            account.Id, 
+            account.Iban, 
+            account.Balance, 
+            account.Type, 
+            account.ExpirationDate, 
+            account.InterestRate);
 
         return Result<AccountResponse>.Success(dto);
     }
@@ -33,19 +46,31 @@ public class BankService(AppDbContext dbContext, IAccountStrategyFactory account
             .Where(a => a.UserId == userId)
             .ToListAsync();
 
-        var dto = accounts.Select(a => new AccountResponse(a.Id, a.Iban, a.Balance, a.Type)).ToList();
+        var dto = accounts.Select(a => new AccountResponse(
+            a.Id, a.Iban, a.Balance, a.Type, a.ExpirationDate, a.InterestRate)).ToList();
 
         return Result<List<AccountResponse>>.Success(dto);
     }
 
-    public async Task<Result<AccountResponse>> CreateAccountAsync(int userId, AccountType type)
+    public async Task<Result<AccountResponse>> CreateAccountAsync(int userId, AccountType type, int? termMonths)
     {
         var userExists = await dbContext.Users.AnyAsync(u => u.Id == userId);
         if (!userExists)
             return Result<AccountResponse>.Failure("Пользователь не найден", ErrorType.NotFound);
 
-        var randomDigits = string.Concat(Enumerable.Range(0, 18).Select(_ => Random.Shared.Next(0, 10)));
-        var iban = $"KZ{randomDigits}";
+        var iban = $"KZ{string.Concat(Enumerable.Range(0, 18).Select(_ => Random.Shared.Next(0, 10)))}";
+        decimal? interestRate = null;
+        DateTime? expirationDate = null;
+
+        if (type != AccountType.Current)
+        {
+            var plan = _savingsSettings.Plans.FirstOrDefault(p => p.Type == type && p.TermMonths == termMonths);
+            if (plan == null)
+                return Result<AccountResponse>.Failure("План не найден", ErrorType.NotFound);
+
+            interestRate = plan.InterestRate;
+            expirationDate = DateTime.UtcNow.AddMonths(plan.TermMonths);
+        }
 
         var account = new Account
         {
@@ -53,13 +78,21 @@ public class BankService(AppDbContext dbContext, IAccountStrategyFactory account
             UserId = userId,
             Balance = 0,
             Type = type,
-            IsDeleted = false,
+            ExpirationDate = expirationDate,
+            InterestRate = interestRate,
+            IsDeleted = false
         };
 
         await dbContext.Accounts.AddAsync(account);
         await dbContext.SaveChangesAsync();
 
-        var dto = new AccountResponse(account.Id, account.Iban, account.Balance, account.Type);
+        var dto = new AccountResponse(
+            account.Id, 
+            account.Iban, 
+            account.Balance, 
+            account.Type, 
+            account.ExpirationDate,
+            account.InterestRate);
 
         return Result<AccountResponse>.Success(dto);
     }
@@ -107,7 +140,7 @@ public class BankService(AppDbContext dbContext, IAccountStrategyFactory account
             return Result.Failure("Доступ запрещен", ErrorType.Forbidden);
 
         var strategy = accountFactory.GetStrategy(account.Type);
-        var validationResult = strategy.CanWithdraw(amount, account.Balance);
+        var validationResult = strategy.CanWithdraw(amount, account);
 
         if (validationResult.IsFailure)
             return validationResult;
@@ -144,7 +177,7 @@ public class BankService(AppDbContext dbContext, IAccountStrategyFactory account
             return Result.Failure("Счет получателя не найден", ErrorType.NotFound);
 
         var fromAccountStrategy = accountFactory.GetStrategy(fromAccount.Type);
-        var fromAccountValidationResult = fromAccountStrategy.CanTransfer(amount, fromAccount.Balance);
+        var fromAccountValidationResult = fromAccountStrategy.CanTransfer(amount, fromAccount);
 
         if (fromAccountValidationResult.IsFailure)
             return fromAccountValidationResult;

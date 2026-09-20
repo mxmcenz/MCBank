@@ -1,4 +1,5 @@
 using MCBank.WebApi.Core.Common;
+using MCBank.WebApi.Core.Entities;
 
 namespace MCBank.WebApi.Application.Strategies;
 
@@ -9,8 +10,8 @@ public class CurrentAccountStrategy : IAccountStrategy
             ? Result.Failure("Нельзя пополнить текущий счет суммой меньше или равной нулю")
             : Result.Success();
 
-    public Result CanWithdraw(decimal amount, decimal balance) =>
-        amount > balance ? Result.Failure("Недостаточно средств на текущем счете") : Result.Success();
+    public Result CanWithdraw(decimal amount, Account account) =>
+        amount > account.Balance ? Result.Failure("Недостаточно средств на текущем счете") : Result.Success();
 
-    public Result CanTransfer(decimal amount, decimal balance) => CanWithdraw(amount, balance);
+    public Result CanTransfer(decimal amount, Account account) => CanWithdraw(amount, account);
 }

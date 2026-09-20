@@ -9,7 +9,7 @@ public interface IBankService
 {
     Task<Result<AccountResponse>> GetAccountByIdAsync(int accountId, int currentUserId);
     Task<Result<List<AccountResponse>>> GetAllAccountsAsync(int userId);
-    Task<Result<AccountResponse>> CreateAccountAsync(int userId, AccountType type);
+    Task<Result<AccountResponse>> CreateAccountAsync(int userId, AccountType type, int? termMonths);
     Task<Result> DepositAsync(int accountId, int currentUserId, decimal amount);
     Task<Result> WithdrawAsync(int accountId, int currentUserId, decimal amount);
     Task<Result> TransferAsync(int fromAccountId, int toAccountId, int currentUserId, decimal amount);

@@ -21,7 +21,10 @@ public static class DependencyInjection
 
         var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>()
                           ?? throw new InvalidOperationException("JWT Settings are not configured.");
+        if (!configuration.GetSection("SavingsSettings").Exists())
+            throw new InvalidOperationException("Savings Settings are not configured.");
 
+        services.Configure<SavingsSettings>(configuration.GetSection("SavingsSettings"));
         services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
 
         var key = Encoding.UTF8.GetBytes(jwtSettings.Key);

@@ -7,6 +7,8 @@ public sealed record Account
     public int Id { get; init; }
     public string Iban { get; init; } = string.Empty;
     public decimal Balance { get; set; }
+    public DateTime? ExpirationDate { get; init; }
+    public decimal? InterestRate { get; init; }
     public AccountType Type { get; init; }
     
     public int UserId { get; init; }
