@@ -5,7 +5,7 @@ namespace MCBank.WebApi.Application.Strategies;
 
 public class SavingsFlexibleAccountStrategy : IAccountStrategy
 {
-    public Result CanDeposit(decimal amount) =>
+    public Result CanDeposit(decimal amount, Account account) =>
         amount <= 0
             ? Result.Failure("Нельзя пополнить сберегательный гибкий счет суммой меньше или равной нулю")
             : Result.Success();

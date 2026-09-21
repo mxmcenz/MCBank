@@ -16,52 +16,43 @@
   </div>
 </div>
 </template>
-
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { deposit, withdraw } from "../api/accounts.js";
 import { useNotificationStore } from '../stores/notification';
-
 const props = defineProps(['id', 'type'])
 const router = useRouter()
 const notification = useNotificationStore()
 const amount = ref(null) 
-
 function preventNegative(e) {
   if (e.key === '-' || e.key === 'e') {
     e.preventDefault();
   }
 }
-
 async function submit() {
   if (amount.value === null || amount.value <= 0) {
     notification.show('Сумма должна быть больше 0', 'error');
     return;
   }
-  
   try {
     if (props.type === 'deposit') await deposit(props.id, amount.value)
     else await withdraw(props.id, amount.value)
-
     notification.show('Операция выполнена успешно', 'success', `/accounts/${props.id}`);
     router.push('/result');
   } catch (error) {
     const data = error.response?.data;
     let errorMessage = 'Не удалось выполнить операцию';
-    
     if (typeof data === 'string') {
         errorMessage = data;
     } else if (data && typeof data === 'object') {
         errorMessage = data.message || (data.errors ? Object.values(data.errors).flat().join(', ') : JSON.stringify(data));
     }
-
     notification.show(errorMessage, 'error', `/accounts/${props.id}`);
     router.push('/result');
   }
 }
 </script>
-
 <style scoped>
 .no-spinners::-webkit-outer-spin-button,
 .no-spinners::-webkit-inner-spin-button {

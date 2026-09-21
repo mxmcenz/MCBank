@@ -9,8 +9,8 @@ import AccountDetailsView from "../views/AccountDetailsView.vue";
 import OperationView from "../views/OperationView.vue";
 import TransactionHistoryView from "../views/TransactionHistoryView.vue";
 import TransferView from "../views/TransferView.vue";
+import CreateAccountView from "../views/CreateAccountView.vue";
 import ResultView from "../views/ResultView.vue";
-
 const routes = [
     {
         path: '/auth',
@@ -33,19 +33,17 @@ const routes = [
             { path: 'accounts/:id/operation/:type', component: OperationView, props: true },
             { path: 'accounts/:id/history', component: TransactionHistoryView, props: true },
             { path: 'transfer', component: TransferView },
+            { path: 'create-account', component: CreateAccountView },
             { path: 'result', component: ResultView }
         ]
     }
 ]
-
 const router = createRouter({
     history: createWebHistory(),
     routes
 })
-
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore()
-    
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
         next('/auth/login')
     } else if ((to.path === '/auth/login' || to.path === '/auth/register') && authStore.isAuthenticated) {
@@ -54,5 +52,4 @@ router.beforeEach(async (to, from, next) => {
         next()
     }
 })
-
 export default router

@@ -5,7 +5,7 @@ namespace MCBank.WebApi.Application.Strategies;
 
 public class CurrentAccountStrategy : IAccountStrategy
 {
-    public Result CanDeposit(decimal amount) =>
+    public Result CanDeposit(decimal amount, Account account) =>
         amount <= 0
             ? Result.Failure("Нельзя пополнить текущий счет суммой меньше или равной нулю")
             : Result.Success();

@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 body {
-  @apply bg-gray-950 text-gray-100;
+  @apply bg-gray-950 text-white;
 }
 
 .bg-white {
   @apply bg-gray-900;
 }
 
-.text-gray-900 {
-  @apply text-gray-100;
+.text-gray-900, .text-gray-800, .text-gray-700 {
+  @apply text-white;
 }
 
-.text-gray-600, .text-gray-500 {
-  @apply text-gray-400;
+.text-gray-600, .text-gray-500, .text-gray-400 {
+  @apply text-gray-300;
 }
 
 .bg-gray-100 {
@@ -25,7 +25,7 @@ body {
 }
 
 input, select {
-  @apply bg-gray-800 border-gray-700 text-gray-100;
+  @apply bg-gray-800 border-gray-700 text-white;
 }
 
 

@@ -36,6 +36,14 @@ public class AccountsController(IBankService bankService) : ControllerBase
         return result.ToActionResult();
     }
 
+    [HttpGet("plans")]
+    public async Task<IActionResult> GetSavingsPlans()
+    {
+        var result = await bankService.GetSavingsPlansAsync();
+
+        return result.ToActionResult();
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest request)
     {

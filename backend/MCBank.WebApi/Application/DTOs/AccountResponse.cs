@@ -8,4 +8,5 @@ public sealed record AccountResponse(
     decimal Balance,
     AccountType Type,
     DateTime? ExpirationDate,
-    decimal? InterestRate);
+    decimal? InterestRate,
+    DateTime CreatedAt);

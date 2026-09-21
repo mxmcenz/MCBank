@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { 
     getAccounts, 
+    getSavingsPlans,
     createAccount, 
     deposit, 
     withdraw, 
@@ -8,10 +9,10 @@ import {
     getHistory, 
     deleteAccount 
 } from '../api/accounts';
-
 export const useAccountsStore = defineStore('accounts', {
     state: () => ({
         accounts: [],
+        savingsPlans: [],
         loading: false,
         error: null
     }),
@@ -29,9 +30,18 @@ export const useAccountsStore = defineStore('accounts', {
                 this.loading = false;
             }
         },
-        async create(type) {
+        async fetchSavingsPlans() {
             try {
-                await createAccount(type);
+                const response = await getSavingsPlans();
+                this.savingsPlans = response.data;
+            } catch (err) {
+                this.error = err.response?.data?.Message || 'Ошибка загрузки планов';
+                throw err;
+            }
+        },
+        async create(type, termMonths) {
+            try {
+                await createAccount(type, termMonths);
                 await this.fetchAccounts();
             } catch (err) {
                 this.error = err.response?.data?.Message || 'Ошибка создания счета';

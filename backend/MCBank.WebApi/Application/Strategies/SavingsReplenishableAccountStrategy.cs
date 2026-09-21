@@ -5,7 +5,7 @@ namespace MCBank.WebApi.Application.Strategies;
 
 public class SavingsReplenishableAccountStrategy : IAccountStrategy
 {
-    public Result CanDeposit(decimal amount) =>
+    public Result CanDeposit(decimal amount, Account account) =>
         amount <= 0
             ? Result.Failure("Нельзя пополнить сберегательный счет с пополнением суммой меньше или равной нулю")
             : Result.Success();

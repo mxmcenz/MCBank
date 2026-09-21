@@ -24,14 +24,11 @@
     </main>
   </div>
 </template>
-
 <script setup>
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
-
 const router = useRouter();
 const authStore = useAuthStore();
-
 const handleLogout = async () => {
   await authStore.logout();
   router.push('/auth/login');

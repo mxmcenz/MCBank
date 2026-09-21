@@ -37,7 +37,7 @@ public class AccountStrategyTests
         new List<object[]>
         {
             new object[] { AccountType.Current, 1000m, true },
-            new object[] { AccountType.SavingsFixed, 1000m, false },
+            new object[] { AccountType.SavingsFixed, 1000m, true },
             new object[] { AccountType.SavingsFlexible, 1000m, true },
             new object[] { AccountType.SavingsReplenishable, 1000m, true }
         };
@@ -48,9 +48,10 @@ public class AccountStrategyTests
     {
         //Arrange
         var strategy = new AccountStrategyFactory().GetStrategy(type);
+        var account = new Account { Balance = 0, Type = type };
 
         //Act
-        var result = strategy.CanDeposit(amount);
+        var result = strategy.CanDeposit(amount, account);
 
         //Assert
         result.IsSuccess.Should().Be(expectedSuccess);

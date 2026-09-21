@@ -1,29 +1,25 @@
 import api from "./axios.js";
-
 export function getAccountIdByIban(iban) {
     return api.get(`/accounts/iban/${iban}`)
 }
-
 export function getAccounts() {
     return api.get('/accounts')
 }
-
+export function getSavingsPlans() {
+    return api.get('/accounts/plans')
+}
 export function getAccountById(id){
     return api.get(`/accounts/${id}`)
 }
-
-export function createAccount(type) {
-    return api.post('/accounts', {accountType: type});
+export function createAccount(type, termMonths = null) {
+    return api.post('/accounts', {accountType: type, termMonths});
 }
-
 export function deposit(accountId, amount) {
     return api.post('/accounts/deposit', {accountId, amount: Number(amount)})
 }
-
 export function withdraw(accountId, amount) {
     return api.post('/accounts/withdraw', {accountId, amount: Number(amount)})
 }
-
 export function transfer (fromAccountId, toAccountId, amount) {
     return api.post('/accounts/transfer', {
         fromAccountId,
@@ -31,11 +27,9 @@ export function transfer (fromAccountId, toAccountId, amount) {
         amount: Number(amount)
     });
 }
-
 export function getHistory(accountId) {
     return api.get(`/accounts/${accountId}/transactions`)
 }
-
 export function deleteAccount(accountId) {
     return api.delete(`/accounts/${accountId}`)
 }

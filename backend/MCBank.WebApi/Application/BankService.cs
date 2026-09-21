@@ -29,12 +29,13 @@ public class BankService(
             return Result<AccountResponse>.Failure("Доступ запрещен", ErrorType.Forbidden);
 
         var dto = new AccountResponse(
-            account.Id, 
-            account.Iban, 
-            account.Balance, 
-            account.Type, 
-            account.ExpirationDate, 
-            account.InterestRate);
+            account.Id,
+            account.Iban,
+            account.Balance,
+            account.Type,
+            account.ExpirationDate,
+            account.InterestRate,
+            account.CreatedAt);
 
         return Result<AccountResponse>.Success(dto);
     }
@@ -47,10 +48,13 @@ public class BankService(
             .ToListAsync();
 
         var dto = accounts.Select(a => new AccountResponse(
-            a.Id, a.Iban, a.Balance, a.Type, a.ExpirationDate, a.InterestRate)).ToList();
+            a.Id, a.Iban, a.Balance, a.Type, a.ExpirationDate, a.InterestRate, a.CreatedAt)).ToList();
 
         return Result<List<AccountResponse>>.Success(dto);
     }
+
+    public Task<Result<List<SavingsPlan>>> GetSavingsPlansAsync() => 
+        Task.FromResult(Result<List<SavingsPlan>>.Success(_savingsSettings.Plans));
 
     public async Task<Result<AccountResponse>> CreateAccountAsync(int userId, AccountType type, int? termMonths)
     {
@@ -80,19 +84,21 @@ public class BankService(
             Type = type,
             ExpirationDate = expirationDate,
             InterestRate = interestRate,
-            IsDeleted = false
+            IsDeleted = false,
+            CreatedAt = DateTime.UtcNow
         };
 
         await dbContext.Accounts.AddAsync(account);
         await dbContext.SaveChangesAsync();
 
         var dto = new AccountResponse(
-            account.Id, 
-            account.Iban, 
-            account.Balance, 
-            account.Type, 
+            account.Id,
+            account.Iban,
+            account.Balance,
+            account.Type,
             account.ExpirationDate,
-            account.InterestRate);
+            account.InterestRate,
+            account.CreatedAt);
 
         return Result<AccountResponse>.Success(dto);
     }
@@ -107,8 +113,17 @@ public class BankService(
         if (account.UserId != currentUserId)
             return Result.Failure("Доступ запрещен", ErrorType.Forbidden);
 
+        if (account.Type == AccountType.SavingsFixed)
+        {
+            var hasExistingDeposit = await dbContext.Transactions
+                .AnyAsync(t => t.AccountId == accountId && t.Type == TransactionType.Deposit);
+            if (hasExistingDeposit)
+                return Result.Failure("Фиксированный сберегательный счет можно пополнить только один раз",
+                    ErrorType.Conflict);
+        }
+
         var strategy = accountFactory.GetStrategy(account.Type);
-        var validationResult = strategy.CanDeposit(amount);
+        var validationResult = strategy.CanDeposit(amount, account);
 
         if (validationResult.IsFailure)
             return validationResult;
@@ -183,7 +198,7 @@ public class BankService(
             return fromAccountValidationResult;
 
         var toAccountStrategy = accountFactory.GetStrategy(toAccount.Type);
-        var toAccountValidationResult = toAccountStrategy.CanDeposit(amount);
+        var toAccountValidationResult = toAccountStrategy.CanDeposit(amount, toAccount);
 
         if (toAccountValidationResult.IsFailure)
             return toAccountValidationResult;

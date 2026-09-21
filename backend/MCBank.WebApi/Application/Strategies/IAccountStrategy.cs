@@ -5,7 +5,7 @@ namespace MCBank.WebApi.Application.Strategies;
 
 public interface IAccountStrategy
 {
-    Result CanDeposit(decimal amount);
+    Result CanDeposit(decimal amount, Account account);
     Result CanWithdraw(decimal amount, Account account);
     Result CanTransfer(decimal amount, Account account);
 }

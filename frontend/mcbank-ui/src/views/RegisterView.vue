@@ -4,15 +4,12 @@ import { useRouter } from "vue-router";
 import { register } from '../api/auth.js';
 import { useAuthStore } from "../stores/auth.js";
 import { useNotificationStore } from '../stores/notification';
-
 const router = useRouter();
 const authStore = useAuthStore();
 const notification = useNotificationStore();
-
 const username = ref('');
 const password = ref('');
 const loading = ref(false);
-
 async function handleRegister() {
   loading.value = true;
   try {
@@ -22,13 +19,11 @@ async function handleRegister() {
   } catch (error) {
     const data = error.response?.data;
     let errorMessage = 'Ошибка регистрации';
-    
     if (typeof data === 'string') {
         errorMessage = data;
     } else if (data && typeof data === 'object') {
         errorMessage = data.message || (data.errors ? Object.values(data.errors).flat().join(', ') : JSON.stringify(data));
     }
-
     notification.show(errorMessage, 'error');
     router.push('/auth/result');
   } finally {
@@ -36,7 +31,6 @@ async function handleRegister() {
   }
 }
 </script>
-
 <template>
   <div class="bg-gray-900 p-8 rounded-lg shadow-md border border-gray-800">
     <h1 class="text-2xl font-bold text-gray-100 mb-6 text-center">Регистрация в MCBank</h1>

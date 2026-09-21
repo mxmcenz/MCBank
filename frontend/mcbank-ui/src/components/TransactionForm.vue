@@ -1,15 +1,11 @@
 <script setup>
 import { ref } from 'vue'
-
 const props = defineProps(['accounts'])
 const emit = defineEmits(['transaction'])
-
 const localAccountId = ref(null)
 const localAmount = ref(0)
-
 function submit(type) {
   if (!localAccountId.value || localAmount <= 0) return
-
   emit('transaction', {
     accountId: localAccountId.value,
     amount: localAmount.value,
@@ -17,7 +13,6 @@ function submit(type) {
   })
 }
 </script>
-
 <template>
 <div>
   <select v-model="localAccountId">
@@ -30,7 +25,5 @@ function submit(type) {
   <button @click="submit('withdraw')">Снять</button>
 </div>
 </template>
-
 <style scoped>
-
 </style>

@@ -10,6 +10,7 @@ public sealed record Account
     public DateTime? ExpirationDate { get; init; }
     public decimal? InterestRate { get; init; }
     public AccountType Type { get; init; }
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
     
     public int UserId { get; init; }
     public User User { get; init; } = null!;
