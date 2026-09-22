@@ -9,14 +9,14 @@ namespace MCBank.WebApi.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class AccountsController(IBankService bankService) : ControllerBase
+public class AccountsController(IAccountService accountService, ISavingsPlanService savingsPlanService) : ControllerBase
 {
     private int CurrentUserId => int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
 
     [HttpGet("{accountId:int}")]
     public async Task<IActionResult> GetAccountById(int accountId)
     {
-        var result = await bankService.GetAccountByIdAsync(accountId, CurrentUserId);
+        var result = await accountService.GetAccountByIdAsync(accountId, CurrentUserId);
 
         return result.ToActionResult();
     }
@@ -24,14 +24,14 @@ public class AccountsController(IBankService bankService) : ControllerBase
     [HttpGet("iban/{iban}")]
     public async Task<IActionResult> GetAccountIdByIban(string iban)
     {
-        var result = await bankService.GetAccountIdByIbanAsync(iban);
+        var result = await accountService.GetAccountIdByIbanAsync(iban);
         return result.ToActionResult();
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAccounts()
     {
-        var result = await bankService.GetAllAccountsAsync(CurrentUserId);
+        var result = await accountService.GetAllAccountsAsync(CurrentUserId);
 
         return result.ToActionResult();
     }
@@ -39,7 +39,7 @@ public class AccountsController(IBankService bankService) : ControllerBase
     [HttpGet("plans")]
     public async Task<IActionResult> GetSavingsPlans()
     {
-        var result = await bankService.GetSavingsPlansAsync();
+        var result = await savingsPlanService.GetSavingsPlansAsync();
 
         return result.ToActionResult();
     }
@@ -47,7 +47,7 @@ public class AccountsController(IBankService bankService) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest request)
     {
-        var result = await bankService.CreateAccountAsync(CurrentUserId, request.AccountType, request.TermMonths);
+        var result = await accountService.CreateAccountAsync(CurrentUserId, request.AccountType, request.TermMonths);
 
         if (result.IsFailure)
             return result.ToActionResult();
@@ -55,43 +55,10 @@ public class AccountsController(IBankService bankService) : ControllerBase
         return CreatedAtAction(nameof(GetAccountById), new { accountId = result.Value.Id }, result.Value);
     }
 
-    [HttpPost("deposit")]
-    public async Task<IActionResult> Deposit([FromBody] TransactionRequest request)
-    {
-        var result = await bankService.DepositAsync(request.AccountId, CurrentUserId, request.Amount);
-
-        return result.ToActionResult();
-    }
-
-    [HttpPost("withdraw")]
-    public async Task<IActionResult> Withdraw([FromBody] TransactionRequest request)
-    {
-        var result = await bankService.WithdrawAsync(request.AccountId, CurrentUserId, request.Amount);
-
-        return result.ToActionResult();
-    }
-
-    [HttpPost("transfer")]
-    public async Task<IActionResult> Transfer([FromBody] TransferRequest request)
-    {
-        var result =
-            await bankService.TransferAsync(request.FromAccountId, request.ToAccountId, CurrentUserId, request.Amount);
-
-        return result.ToActionResult();
-    }
-
-    [HttpGet("{accountId:int}/transactions")]
-    public async Task<IActionResult> GetAccountTransactions(int accountId)
-    {
-        var result = await bankService.GetTransactionHistoryAsync(accountId, CurrentUserId);
-
-        return result.ToActionResult();
-    }
-
     [HttpDelete("{accountId:int}")]
     public async Task<IActionResult> DeleteAccountById(int accountId)
     {
-        var result = await bankService.DeleteAccount(accountId, CurrentUserId);
+        var result = await accountService.DeleteAccount(accountId, CurrentUserId);
 
         return result.ToActionResult();
     }

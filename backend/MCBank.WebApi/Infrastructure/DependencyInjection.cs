@@ -2,6 +2,7 @@ using System.Text;
 using FluentValidation;
 using MCBank.WebApi.Application;
 using MCBank.WebApi.Application.Interfaces;
+using MCBank.WebApi.Application.Services;
 using MCBank.WebApi.Application.Strategies;
 using MCBank.WebApi.Infrastructure.Authentication;
 using MCBank.WebApi.Infrastructure.Settings;
@@ -66,7 +67,10 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IBankService, BankService>();
+        services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<ISavingsPlanService, SavingsPlanService>();
+        services.AddScoped<ITransactionService, TransactionService>();
+        services.AddScoped<IInterestService, InterestService>();
 
         services.AddSingleton<IAccountStrategyFactory, AccountStrategyFactory>();
 
