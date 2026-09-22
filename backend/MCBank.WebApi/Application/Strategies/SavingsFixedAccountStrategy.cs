@@ -15,4 +15,9 @@ public class SavingsFixedAccountStrategy : IAccountStrategy
 
     public Result CanTransfer(decimal amount, Account account) =>
         Result.Failure("Нельзя сделать перевод с фиксированного сберегательного счета");
+
+    public decimal CalculateInterest(decimal balance, decimal annualRate) => balance * (annualRate / 100) / 12;
+
+    public bool IsInterestDue(DateTime? lastAppliedAt, DateTime now) =>
+        lastAppliedAt == null || lastAppliedAt.Value.AddMonths(1) <= now;
 }

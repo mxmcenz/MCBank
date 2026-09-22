@@ -15,4 +15,9 @@ public class SavingsFlexibleAccountStrategy : IAccountStrategy
         : Result.Success();
 
     public Result CanTransfer(decimal amount, Account account) => CanWithdraw(amount, account);
+    
+    public decimal CalculateInterest(decimal balance, decimal annualRate) => balance * (annualRate / 100) / 365;
+
+    public bool IsInterestDue(DateTime? lastAppliedAt, DateTime now) =>
+        lastAppliedAt == null || lastAppliedAt.Value.Date < now.Date;
 }

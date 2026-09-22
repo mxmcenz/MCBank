@@ -8,4 +8,6 @@ public interface IAccountStrategy
     Result CanDeposit(decimal amount, Account account);
     Result CanWithdraw(decimal amount, Account account);
     Result CanTransfer(decimal amount, Account account);
+    decimal CalculateInterest(decimal balance, decimal annualRate);
+    bool IsInterestDue(DateTime? lastAppliedAt, DateTime now);
 }

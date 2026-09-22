@@ -14,4 +14,8 @@ public class CurrentAccountStrategy : IAccountStrategy
         amount > account.Balance ? Result.Failure("Недостаточно средств на текущем счете") : Result.Success();
 
     public Result CanTransfer(decimal amount, Account account) => CanWithdraw(amount, account);
+    
+    public decimal CalculateInterest(decimal balance, decimal annualRate) => 0;
+    
+    public bool IsInterestDue(DateTime? lastAppliedAt, DateTime now) => false;
 }

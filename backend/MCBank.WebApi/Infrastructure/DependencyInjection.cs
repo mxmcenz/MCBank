@@ -71,7 +71,8 @@ public static class DependencyInjection
         services.AddScoped<ISavingsPlanService, SavingsPlanService>();
         services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<IInterestService, InterestService>();
-
+        
+        services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
         services.AddSingleton<IAccountStrategyFactory, AccountStrategyFactory>();
 
         return services;
