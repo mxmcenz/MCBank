@@ -2,6 +2,7 @@ using System.Text;
 using FluentValidation;
 using MCBank.WebApi.Application;
 using MCBank.WebApi.Application.Interfaces;
+using MCBank.WebApi.Application.Jobs;
 using MCBank.WebApi.Application.Services;
 using MCBank.WebApi.Application.Strategies;
 using MCBank.WebApi.Infrastructure.Authentication;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Quartz;
 
 namespace MCBank.WebApi.Infrastructure;
 
@@ -61,6 +63,19 @@ public static class DependencyInjection
                     }
                 };
             });
+
+        services.AddQuartz(q =>
+        {
+            var jobKey = new JobKey(nameof(InterestCalculationJob));
+            q.AddJob<InterestCalculationJob>(options => options.WithIdentity(jobKey));
+
+            q.AddTrigger(opts => opts
+                .ForJob(jobKey)
+                .WithIdentity("InterestCalculationJob-trigger")
+                .WithCronSchedule("0 0 0 * * ?"));
+        });
+
+        services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 

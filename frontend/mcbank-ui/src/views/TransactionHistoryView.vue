@@ -24,7 +24,8 @@ onMounted(() => {
 const transactionTypes = {
   'Deposit': 'Пополнение',
   'Withdraw': 'Снятие',
-  'Transfer': 'Перевод'
+  'Transfer': 'Перевод',
+  'Interest': 'Процент'
 };
 const getTransactionType = (type) => transactionTypes[type] || type;
 </script>
@@ -45,7 +46,7 @@ const getTransactionType = (type) => transactionTypes[type] || type;
         </thead>
         <tbody>
           <tr v-for="t in transactions" :key="t.id" class="border-b border-gray-800">
-            <td class="py-2" :class="t.type === 'Deposit' ? 'text-emerald-400' : 'text-red-400'">{{ getTransactionType(t.type) }}</td>
+            <td class="py-2" :class="t.type === 'Deposit' || t.type === 'Interest' ? 'text-emerald-400' : 'text-red-400'">{{ getTransactionType(t.type) }}</td>
             <td class="py-2 font-medium">{{ t.amount }} KZT</td>
             <td class="py-2 text-gray-400">{{ new Date(t.createdAt).toLocaleString() }}</td>
           </tr>
