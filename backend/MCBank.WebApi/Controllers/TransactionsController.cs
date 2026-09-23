@@ -39,7 +39,7 @@ public class TransactionsController(ITransactionService transactionService) : Co
         return result.ToActionResult();
     }
 
-    [HttpGet("{accountId:int}/transactions")]
+    [HttpGet("{accountId:int}")]
     public async Task<IActionResult> GetAccountTransactions(int accountId)
     {
         var result = await transactionService.GetTransactionHistoryAsync(accountId, CurrentUserId);
